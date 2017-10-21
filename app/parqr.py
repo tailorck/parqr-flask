@@ -50,7 +50,10 @@ class Parqr():
         # retrieve the appropriate vectorizer and pre-computed TF-IDF Matrix
         # for this course, or create new ones if they do not exist
         if cid not in self._vectorizers or cid not in self._matrices:
-            vectorizer, tfidf_matrix = self._vectorize_words(cid)
+            try:
+                vectorizer, tfidf_matrix = self._vectorize_words(cid)
+            except InvalidUsage as error:
+                raise error
         else:
             vectorizer = self._vectorizers[cid]
             tfidf_matrix = self._matrices[cid]
@@ -101,7 +104,11 @@ class Parqr():
             A list of all the words found in the subject, body, and tags of
             each post in the course.
         """
-        # TODO: Catch DoesNotExist exception for missing course
+        # Catch DoesNotExist exception for missing course
+        if not Course.objects(cid=cid):
+            if self.verbose:
+                self._logger.error("Invalid Course ID")
+            raise InvalidUsage("Invalid cid found in parameters", 400)
         course = Course.objects.get(cid=cid)
 
         words = []
@@ -138,7 +145,11 @@ class Parqr():
         vectorizer = text.TfidfVectorizer(analyzer='word',
                                           stop_words=stop_words)
 
-        post_words = self._get_posts_as_words(cid)
+        try:
+            post_words = self._get_posts_as_words(cid)
+        except InvalidUsage as error:
+            raise error
+
         tfidf_matrix = vectorizer.fit_transform(post_words)
 
         self._vectorizers[cid] = vectorizer

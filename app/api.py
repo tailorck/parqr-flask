@@ -58,5 +58,8 @@ def similar_posts():
 
     query = request.json['query']
     cid = request.json['cid']
-    similar_posts = parqr.get_similar_posts(cid, query, N)
+    try:
+        similar_posts = parqr.get_similar_posts(cid, query, N)
+    except InvalidUsage as error:
+        raise error
     return jsonify(similar_posts)
