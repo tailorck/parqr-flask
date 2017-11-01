@@ -46,8 +46,13 @@ class Scraper():
 
         # TODO: Catch invalid course_id exception
         network = self._piazza.network(course_id)
-        self._threads[course_id] = Thread(target=self._update_posts,
-                                          args=(course_id, network,))
+        try:
+            self._threads[course_id] = Thread(target=self._update_posts,
+                                              args=(course_id, network,))
+        except KeyError as error:
+            if self.verbose:
+                self._logger.error("Unable to update posts. Invalid Course ID")
+            raise ValueError
 
         self._threads[course_id].start()
 

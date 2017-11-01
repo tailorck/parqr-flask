@@ -1,11 +1,13 @@
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction import text
-from app.exception import InvalidUsage
 from app.models import Course, Post
 from app.utils import clean, clean_and_split
+from mongoengine import DoesNotExist
+from app.exception import InvalidUsage
 import numpy as np
 import logging
 import constants
+
 
 class Parqr():
     def __init__(self, verbose=False):
@@ -50,10 +52,7 @@ class Parqr():
         # retrieve the appropriate vectorizer and pre-computed TF-IDF Matrix
         # for this course, or create new ones if they do not exist
         if cid not in self._vectorizers or cid not in self._matrices:
-            try:
-                vectorizer, tfidf_matrix = self._vectorize_words(cid)
-            except InvalidUsage as error:
-                raise error
+            vectorizer, tfidf_matrix = self._vectorize_words(cid)
         else:
             vectorizer = self._vectorizers[cid]
             tfidf_matrix = self._matrices[cid]
@@ -105,11 +104,14 @@ class Parqr():
             each post in the course.
         """
         # Catch DoesNotExist exception for missing course
-        if not Course.objects(cid=cid):
+        try:
+            course = Course.objects.get(cid=cid)
+        except DoesNotExist as error:
             if self.verbose:
-                self._logger.error("Invalid Course ID")
-            raise InvalidUsage("Invalid cid found in parameters", 400)
-        course = Course.objects.get(cid=cid)
+                self._logger.error("Unable to find similar posts. Invalid Course ID")
+            raise ValueError('Invalid cid. No posts found in database.')
+
+
 
         words = []
         pids = []
@@ -145,12 +147,12 @@ class Parqr():
         vectorizer = text.TfidfVectorizer(analyzer='word',
                                           stop_words=stop_words)
 
-        try:
-            post_words = self._get_posts_as_words(cid)
-        except InvalidUsage as error:
-            raise error
+        post_words = self._get_posts_as_words(cid)
 
-        tfidf_matrix = vectorizer.fit_transform(post_words)
+        try:
+            tfidf_matrix = vectorizer.fit_transform(post_words)
+        except ValueError as error:
+            raise ValueError('Invalid cid. No posts found in database')
 
         self._vectorizers[cid] = vectorizer
         self._matrices[cid] = tfidf_matrix
