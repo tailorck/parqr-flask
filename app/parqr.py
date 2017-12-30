@@ -1,11 +1,13 @@
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction import text
-from app.exception import InvalidUsage
 from app.models import Course, Post
 from app.utils import clean, clean_and_split
+from mongoengine import DoesNotExist
+from app.exception import InvalidUsage
 import numpy as np
 import logging
 import constants
+
 
 class Parqr():
     def __init__(self, verbose=False):
@@ -101,8 +103,15 @@ class Parqr():
             A list of all the words found in the subject, body, and tags of
             each post in the course.
         """
-        # TODO: Catch DoesNotExist exception for missing course
-        course = Course.objects.get(cid=cid)
+        # Catch DoesNotExist exception for missing course
+        try:
+            course = Course.objects.get(cid=cid)
+        except DoesNotExist as error:
+            if self.verbose:
+                self._logger.error("Unable to find similar posts. Invalid Course ID")
+            raise ValueError('Invalid cid. No posts found in database.')
+
+
 
         words = []
         pids = []
@@ -139,7 +148,11 @@ class Parqr():
                                           stop_words=stop_words)
 
         post_words = self._get_posts_as_words(cid)
-        tfidf_matrix = vectorizer.fit_transform(post_words)
+
+        try:
+            tfidf_matrix = vectorizer.fit_transform(post_words)
+        except ValueError as error:
+            raise ValueError('Invalid cid. No posts found in database')
 
         self._vectorizers[cid] = vectorizer
         self._matrices[cid] = tfidf_matrix

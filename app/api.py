@@ -35,7 +35,10 @@ def update_course():
         raise InvalidUsage('Course ID not found in JSON', 400)
 
     course_id = request.json['course_id']
-    scraper.update_posts(course_id)
+    try:
+        scraper.update_posts(course_id)
+    except KeyError as error:
+        raise InvalidUsage('Invalid Course ID found in JSON', 400)
     return jsonify({'course_id': course_id}), 202
 
 
@@ -58,5 +61,8 @@ def similar_posts():
 
     query = request.json['query']
     cid = request.json['cid']
-    similar_posts = parqr.get_similar_posts(cid, query, N)
+    try:
+        similar_posts = parqr.get_similar_posts(cid, query, N)
+    except ValueError as error:
+        raise InvalidUsage(error.message, 400)
     return jsonify(similar_posts)
