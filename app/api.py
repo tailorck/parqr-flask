@@ -14,7 +14,7 @@ from app import app
 from app.parser import Parser
 from app.modeltrain import ModelTrain
 from app.models import Course, Event, EventData
-from tasksrq import parse_posts, train_models
+from tasksrq import parse_and_train_models
 from exception import InvalidUsage, to_dict
 from parqr import Parqr
 
@@ -139,13 +139,11 @@ def register_class():
         curr_time = datetime.now()
         delayed_time = curr_time + timedelta(minutes=5)
 
-        parse_job = scheduler.schedule(scheduled_time=curr_time,
-                                       func=parse_posts,
-                                       kwargs={"course_id": cid}, interval=900)
-        train_job = scheduler.schedule(scheduled_time=delayed_time,
-                                       func=train_models,
-                                       kwargs={"course_id": cid}, interval=900)
-        redis.set(cid, ','.join([parse_job.id, train_job.id]))
+        new_course_job = scheduler.schedule(scheduled_time=datetime.now(),
+                                            func=parse_and_train_models,
+                                            kwargs={"course_id": cid},
+                                            interval=60)
+        redis.set(cid, new_course_job.id)
         return jsonify({'course_id': cid}), 202
     else:
         raise InvalidUsage('Course ID already exists', 500)
@@ -158,11 +156,8 @@ def deregister_class():
     cid = request.json['course_id']
     if redis.exists(cid):
         logger.info('Deregistering course: {}'.format(cid))
-        job_id_strs = redis.get(cid)
-        jobs = filter(lambda job: str(job.id) in job_id_strs,
-                      [j for j in scheduler.get_jobs()])
-        for job in jobs:
-            scheduler.cancel(job)
+        job_id_str = redis.get(cid)
+        scheduler.cancel(job_id_str)
         redis.delete(cid)
         return jsonify({'course_id': cid}), 202
     else:
