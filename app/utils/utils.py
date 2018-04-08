@@ -30,8 +30,8 @@ def create_app(config_name):
     log_level = app.config['LOG_LEVEL']
     fh = RotatingFileHandler(log_file, maxBytes=100*1024*1024, backupCount=5)
 
-    formatter = logging.Formatter('[%(asctime)s] %(levelname)-8s '
-                                  '%(module)-10s: %(message)s')
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s '
+                                  '%(module)s: %(message)s')
     app.logger.addHandler(fh)
     for handler in app.logger.handlers:
         handler.setFormatter(formatter)
