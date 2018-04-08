@@ -28,7 +28,7 @@ class ModelTrain(object):
         # TODO: remove hard coded resources path.
         # Requires getting setup.py working and then use pkg_resources
         self.verbose = verbose
-        self.model_cache = ModelCache('app/resources')
+        self.model_cache = ModelCache()
 
     def persist_all_models(self):
         """Creates new models for each course in database and persists each to

@@ -87,7 +87,6 @@ def register_event():
 
 
 @app.route(api_endpoint + 'train_all_models', methods=['POST'])
-@verify_non_empty_json_request
 def train_all_models():
     model_train.persist_all_models()
     return jsonify({'message': 'training all models'}), 202

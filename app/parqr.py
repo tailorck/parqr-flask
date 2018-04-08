@@ -55,7 +55,7 @@ class Parqr(object):
     def __init__(self):
         """Initializes private caching dictionaries."""
         self._course_dict = {}
-        self._model_cache = ModelCache('app/resources')
+        self._model_cache = ModelCache()
 
     def get_recommendations(self, cid, query, N):
         """Get the N most similar posts to provided query.

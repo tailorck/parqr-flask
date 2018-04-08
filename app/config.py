@@ -22,6 +22,9 @@ class ProductionConfig(Config):
 
 class DevelopmentConfig(Config):
     LOG_LEVEL = logging.DEBUG
+    MONGODB_DB = 'parqr'
+    MONGODB_HOST = 'localhost'
+    MONGODB_PORT = 27017
     DEBUG = True
     TESTING = False
 
