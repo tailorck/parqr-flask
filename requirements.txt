@@ -73,3 +73,4 @@ yolk==0.4.3
 rq
 rq-dashboard
 rq-scheduler==0.7.0
+nltk==3.2.5
