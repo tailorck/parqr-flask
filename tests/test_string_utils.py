@@ -11,26 +11,26 @@ def test_clean():
     # Test Case with Punctuations and trailing spaces
     str = "[string. With*, Punctuation!  "
     clean_res = clean(str)
-    expected_res = "string  with   punctuation"
+    expected_res = "string with punctuation"
     assert clean_res == expected_res
 
     # Test case with numeric values
     str = "22 str8ing -10 With 37.256 Numbers"
     clean_res = clean(str)
-    expected_res = "str ing     with        numbers"
+    expected_res = "string with numbers"
     assert clean_res == expected_res
 
     # Test case with upper and lowe cases and trailing spaces
     str = "   sTriNg wITh   UPPER AnD  lower Cases"
     clean_res = clean(str)
-    expected_res = "string with   upper and  lower cases"
+    expected_res = "string with upper and lower cases"
     assert clean_res == expected_res
 
     # Test Case with punctuations, numeric values and trailing spaces
     str = "  @<string's>;. (#{176With+_%}&. " \
           "[\$,] |/22Punctuation:=~890| )^?**!"
     clean_res = clean(str)
-    expected_res = "string s          with                 punctuation"
+    expected_res = "strings with punctuation"
     assert clean_res == expected_res
 
 
@@ -44,7 +44,7 @@ def test_clean_and_split():
     # Test case with numeric values
     str = "22 str8ing -10 With 37.256 Numbers"
     clean_res = clean_and_split(str)
-    expected_res = ["str", "ing", "with", "numbers"]
+    expected_res = ["string", "with", "numbers"]
     assert clean_res == expected_res
 
     # Test case with upper and lowe cases and trailing spaces
@@ -57,7 +57,7 @@ def test_clean_and_split():
     str = "  @<string's>;. (#{176With+_%}&. " \
           "[\$,] |/22Punctuation:=~890| )^?**!"
     clean_res = clean_and_split(str)
-    expected_res = ["string", "s", "with", "punctuation"]
+    expected_res = ["strings", "with", "punctuation"]
     assert clean_res == expected_res
 
 
