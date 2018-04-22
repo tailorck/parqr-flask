@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from hashlib import md5
 import logging
+import pdb
 
 from flask import jsonify, make_response, request
 from flask_jsonschema import JsonSchema, ValidationError
@@ -158,6 +159,6 @@ def deregister_class():
         job_id_str = redis.get(cid)
         scheduler.cancel(job_id_str)
         redis.delete(cid)
-        return jsonify({'course_id': cid}), 202
+        return jsonify({'course_id': cid}), 200
     else:
         raise InvalidUsage('Course ID does not exists', 500)
