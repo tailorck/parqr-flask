@@ -173,37 +173,33 @@ def deregister_class():
         raise InvalidUsage('Course ID does not exists', 500)
 
 
-@app.route(api_endpoint + 'class/cid/usage', methods=['GET'])
-def get_parqr_stats():
-    course_id = request.args.get('course_id')
-    start_time = request.args.get('start_time')
+@app.route(api_endpoint + 'class/<course_id>/usage', methods=['GET'])
+def get_parqr_stats(course_id):
+    try:
+        start_time = int(request.args.get('start_time'))
+    except:
+        raise InvalidUsage('Invalid start time specified', 500)
     num_active_uid = get_unique_users(course_id, start_time)
     num_post_prevented = number_posts_prevented(course_id, start_time)
     num_total_posts = total_posts_in_course(course_id, start_time)
-    if num_active_uid == -1 or num_post_prevented == -1 \
-            or num_total_posts == -1:
-        raise InvalidUsage('Invalid Course ID / Start Time', 500)
-    else:
-        num_all_post = float(num_total_posts + num_post_prevented)
-        percent_traffic_reduced = num_post_prevented / num_all_post
-        return jsonify({'usingParqr': num_active_uid,
-                        'assistedCount': num_post_prevented,
-                        'percentTrafficReduced': percent_traffic_reduced}), 202
+    num_all_post = float(num_total_posts + num_post_prevented)
+    percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
+    return jsonify({'usingParqr': num_active_uid,
+                    'assistedCount': num_post_prevented,
+                    'percentTrafficReduced': percent_traffic_reduced}), 202
 
 
-@app.route(api_endpoint + '/api/class/cid/attentionposts', methods=['GET'])
-def get_top_posts():
-    course_id = request.args.get('course_id')
-    start_time = request.args.get('start_time')
-    num_posts= request.args.get('num_posts')
-    posts = get_top_attention_warranted_posts(course_id, start_time, num_posts)
-    if posts == -1:
-        raise InvalidUsage('Invalid Course ID / Start Time', 500)
-    else:
-        return jsonify({'posts': posts}), 202
+@app.route(api_endpoint + 'class/<course_id>/attentionposts', methods=['GET'])
+def get_top_posts(course_id):
+    try:
+        num_posts = int(request.args.get('num_posts'))
+    except:
+        raise InvalidUsage('Invalid number of posts specified', 500)
+    posts = get_top_attention_warranted_posts(course_id, num_posts)
+    return jsonify({'posts': posts}), 202
 
 
-@app.route(api_endpoint + '/api/class/isvalid', methods=['GET'])
+@app.route(api_endpoint + 'class/isvalid', methods=['GET'])
 def get_course_isvalid():
     course_id = request.args.get('course_id')
     is_valid = is_course_id_valid(course_id)
