@@ -35,6 +35,7 @@ queue = Queue(connection=redis)
 scheduler = Scheduler(connection=redis)
 
 logger.info('Ready to serve requests')
+logger.info('Abhishek Says - This is newest parqr code.')
 
 
 @app.errorhandler(404)

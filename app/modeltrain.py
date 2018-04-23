@@ -123,19 +123,19 @@ class ModelTrain(object):
                 clean_body = clean_and_split(post.body)
                 tags = post.tags
                 words.append(' '.join(clean_subject + clean_body + tags))
-                model_pid_list.append(post.pid)
+                model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.I_ANSWER:
                 if post.i_answer:
                     words.append(' '.join(clean_and_split(post.i_answer)))
-                    model_pid_list.append(post.pid)
+                    model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.S_ANSWER:
                 if post.s_answer:
                     words.append(' '.join(clean_and_split(post.s_answer)))
-                    model_pid_list.append(post.pid)
+                    model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.FOLLOWUP:
                 if post.followups:
                     followup_str = stringify_followups(post.followups)
                     words.append(' '.join(clean_and_split(followup_str)))
-                    model_pid_list.append(post.pid)
+                    model_pid_list.append(post.post_id)
 
         return np.array(words), np.array(model_pid_list)
