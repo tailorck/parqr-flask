@@ -11,6 +11,7 @@ class Config(object):
     MONGODB_HOST = 'localhost'
     MONGODB_PORT = 27017
     LOG_FOLDER = join(file_dir, '..', 'logs')
+    JSONSCHEMA_DIR = join(file_dir, 'schemas')
 
 
 class ProductionConfig(Config):
@@ -30,6 +31,8 @@ class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     MONGODB_DB = 'test_parqr'
+    MONGODB_HOST = 'localhost'
+    MONGODB_PORT = 27017
 
 
 config_dict = {

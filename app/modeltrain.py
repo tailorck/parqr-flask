@@ -34,7 +34,7 @@ class ModelTrain(object):
         """Creates new models for each course in database and persists each to
         file"""
         for course in Course.objects():
-            self.persist_model(course.cid)
+            self.persist_model(course.course_id)
 
     def persist_model(self, cid):
         """Creates new models for course with given cid
@@ -45,6 +45,8 @@ class ModelTrain(object):
         if cid in self._threads and self._threads[cid].is_alive():
             raise InvalidUsage('Background thread is running', 500)
 
+        # TODO: Remove threaded operations after conversion to docker
+        # deployment
         self._threads[cid] = Thread(target=self._persist_model, args=(cid,))
         self._threads[cid].start()
 
@@ -115,7 +117,7 @@ class ModelTrain(object):
         words = []
         model_pid_list = []
 
-        for post in Post.objects(cid=cid):
+        for post in Post.objects(course_id=cid):
             if model_name == TFIDF_MODELS.POST:
                 clean_subject = clean_and_split(post.subject)
                 clean_body = clean_and_split(post.body)
