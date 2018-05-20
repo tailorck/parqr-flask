@@ -36,7 +36,7 @@ class ModelTrain(object):
         for course in Course.objects():
             self.persist_model(course.course_id)
 
-    def persist_model(self, cid):
+    def persist_models(self, cid):
         """Vectorizes the information in database into multiple TF-IDF models.
         The models are persisted by pickling the TF-IDF sklearn models,
         storing the sparse vector matrix as a npz file, and saving the
