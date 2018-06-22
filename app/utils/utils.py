@@ -3,6 +3,7 @@ import logging
 import os
 
 from flask import Flask
+import rq_dashboard
 from Crypto.PublicKey import RSA
 
 from ..config import config_dict
@@ -24,6 +25,13 @@ def create_app(config_name):
     app : Flask object
     """
     app = Flask('app')
+
+    # First import the default settings from rq_dashboard to monitor redis
+    # queues on the web.
+    app.config.from_object(rq_dashboard.default_settings)
+    app.register_blueprint(rq_dashboard.blueprint, url_prefix='/rq')
+
+    # Override some parameters of rq_dashboard config with app.config
     app.config.from_object(config_dict[config_name])
 
     log_file = os.path.join(app.config['LOG_FOLDER'], 'app.log')
