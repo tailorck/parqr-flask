@@ -20,4 +20,5 @@ rq==0.10.0
 rq_dashboard==0.3.10
 rq_scheduler==0.7.0
 scipy==1.0.0
+nltk==3.3
 sklearn==0.0

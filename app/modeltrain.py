@@ -1,16 +1,23 @@
 from multiprocessing.dummy import Pool
 from functools import partial
-from threading import Thread
+
 import logging
 import warnings
 
 import numpy as np
-from sklearn.feature_extraction import text
+
+import nltk
+from nltk import word_tokenize, SnowballStemmer, WordNetLemmatizer
+from nltk.corpus import stopwords
+
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline
 
 from app.exception import InvalidUsage
 from constants import TFIDF_MODELS
 from models import Post, Course
 from utils import clean_and_split, stringify_followups, ModelCache
+import string
 
 warnings.filterwarnings("ignore")
 
@@ -27,8 +34,10 @@ class ModelTrain(object):
         """
         # TODO: remove hard coded resources path.
         # Requires getting setup.py working and then use pkg_resources
+        nltk.download("all-nltk")
         self.verbose = verbose
         self.model_cache = ModelCache()
+        self.STOP_WORDS = stopwords.words(str("english"))
 
     def persist_all_models(self):
         """Creates new models for each course in database and persists each to
@@ -53,6 +62,26 @@ class ModelTrain(object):
         pool.map(partial_func, list(TFIDF_MODELS))
         pool.close()
 
+    def _get_analyzer(self, text):
+        """
+        Creates an analyzer that removes punctuation,
+        converts word to lower case and removes stop words.
+        """
+        nopunc = [char for char in text if char not in string.punctuation]
+        nopunc = ''.join(nopunc)
+        return [str(word) for word in nopunc.split()
+                if str(word).lower() not in
+                map(lambda x: str(x), self.STOP_WORDS)]
+
+    def _get_tokenizer(self, doc):
+        """
+        Creates a tokenizer that applies the word net lemmatizer
+        and snowball stemmer.
+        """
+        wnl = WordNetLemmatizer()
+        stemmer = SnowballStemmer("english", ignore_stopwords=True)
+        return [stemmer.stem(wnl.lemmatize(t)) for t in word_tokenize(doc)]
+
     def _create_tfidf_model(self, cid, model_name):
         """Creates a new TfidfVectorizer model from the relevant text in course
         with given course id
@@ -67,15 +96,21 @@ class ModelTrain(object):
             model_name (str): The name of the model dictated by the
                 TFIDF_MODELS enum
         """
-        stop_words = set(text.ENGLISH_STOP_WORDS)
+
         words, pid_list = self._get_words_for_model(cid, model_name)
 
         if words.size != 0:
-            vectorizer = text.TfidfVectorizer(analyzer='word',
-                                              stop_words=stop_words)
-            matrix = vectorizer.fit_transform(words)
 
-            self.model_cache.store_model(cid, model_name, vectorizer)
+            pipeline = Pipeline([
+                ('vect', CountVectorizer(analyzer="word",
+                                         stop_words=self.STOP_WORDS,
+                                         tokenizer=self._get_tokenizer)),
+                ('tfidf', TfidfTransformer())
+            ])
+
+            matrix = pipeline.fit_transform(words)
+
+            self.model_cache.store_model(cid, model_name, pipeline)
             self.model_cache.store_matrix(cid, model_name, matrix)
             self.model_cache.store_pid_list(cid, model_name, pid_list)
 
