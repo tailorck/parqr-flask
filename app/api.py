@@ -82,7 +82,7 @@ def register_event():
 
     event.save()
     logger.info('Recorded {} event from cid {}'
-                .format(data['type'], data['cid']))
+                .format(event.event_type, event.event_data.course_id))
 
     return jsonify({'message': 'success'}), 200
 

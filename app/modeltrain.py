@@ -19,15 +19,12 @@ logger = logging.getLogger('app')
 
 class ModelTrain(object):
 
-    def __init__(self, verbose=False):
+    def __init__(self):
         """ModelTrain constructor
 
         Args:
             verbose (bool): A bool denoting if the module will print info msgs
         """
-        # TODO: remove hard coded resources path.
-        # Requires getting setup.py working and then use pkg_resources
-        self.verbose = verbose
         self.model_cache = ModelCache()
 
     def persist_all_models(self):
