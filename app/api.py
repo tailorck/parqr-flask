@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta
-from hashlib import md5
 import logging
 
 from flask import jsonify, make_response, request
 from flask_jsonschema import JsonSchema, ValidationError
 from redis import Redis
-from rq import Queue
 from rq_scheduler import Scheduler
-import pandas as pd
 
 from app import app
 from app.parser import Parser
@@ -30,7 +27,6 @@ logger = logging.getLogger('app')
 redis_host = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']
 redis = Redis(host=redis_host, port=redis_port, db=0)
-queue = Queue(connection=redis)
 scheduler = Scheduler(connection=redis)
 
 logger.info('Ready to serve requests')
@@ -116,7 +112,8 @@ def register_class():
         new_course_job = scheduler.schedule(scheduled_time=datetime.now(),
                                             func=parse_and_train_models,
                                             kwargs={"course_id": cid},
-                                            interval=COURSE_PARSE_TRAIN_INTERVAL_S)
+                                            interval=COURSE_PARSE_TRAIN_INTERVAL_S,
+                                            timeout=COURSE_PARSE_TRAIN_INTERVAL_S-1)
         redis.set(cid, new_course_job.id)
         return jsonify({'course_id': cid}), 202
     else:
