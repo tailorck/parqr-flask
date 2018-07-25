@@ -7,19 +7,18 @@ from redis import Redis
 from rq_scheduler import Scheduler
 
 from app import app
-from app.parser import Parser
-from app.modeltrain import ModelTrain
 from app.models import Course, Event, EventData
-from app.constants import COURSE_PARSE_TRAIN_INTERVAL_S
-from tasksrq import parse_and_train_models
-from exception import InvalidUsage, to_dict
-from parqr import Parqr
+from app.constants import (
+    COURSE_PARSE_TRAIN_TIMEOUT_S,
+    COURSE_PARSE_TRAIN_INTERVAL_S
+)
+from app.tasksrq import parse_and_train_models
+from app.exception import InvalidUsage, to_dict
+from app.parqr import Parqr
 
 api_endpoint = '/api/'
 
 parqr = Parqr()
-parser = Parser()
-model_train = ModelTrain()
 jsonschema = JsonSchema(app)
 
 logger = logging.getLogger('app')
@@ -113,7 +112,7 @@ def register_class():
                                             func=parse_and_train_models,
                                             kwargs={"course_id": cid},
                                             interval=COURSE_PARSE_TRAIN_INTERVAL_S,
-                                            timeout=COURSE_PARSE_TRAIN_INTERVAL_S-1)
+                                            timeout=COURSE_PARSE_TRAIN_TIMEOUT_S)
         redis.set(cid, new_course_job.id)
         return jsonify({'course_id': cid}), 202
     else:
