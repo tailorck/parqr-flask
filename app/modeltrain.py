@@ -13,8 +13,7 @@ from app.exception import InvalidUsage
 from app.utils import (
     clean_and_split,
     stringify_followups,
-    ModelCache,
-    full_traceback
+    ModelCache
 )
 
 warnings.filterwarnings("ignore")
