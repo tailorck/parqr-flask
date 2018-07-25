@@ -55,11 +55,7 @@ def stem_lem_tokenizer(doc):
 class ModelTrain(object):
 
     def __init__(self):
-        """ModelTrain constructor
-
-        Args:
-            verbose (bool): A bool denoting if the module will print info msgs
-        """
+        """ModelTrain constructor"""
         self.model_cache = ModelCache()
 
     def persist_all_models(self):
