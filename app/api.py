@@ -29,7 +29,6 @@ redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
 
 logger.info('Ready to serve requests')
-logger.info('Abhishek Says - This is newest parqr code.')
 
 
 @app.errorhandler(404)
