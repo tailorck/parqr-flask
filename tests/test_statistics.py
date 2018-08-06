@@ -30,10 +30,12 @@ def unit_test_events_df():
     return unit_test_events_df
 
 
+@mock.patch('app.statistics.Course')
 @mock.patch('app.statistics.convert_db_course_to_df')
 @mock.patch('app.statistics.convert_events_to_df')
 def test_get_unique_users(mock_convert_events_to_df,
                           mock_convert_db_course_to_df,
+                          mock_Course,
                           unit_test_events_df,
                           unit_test_course_df):
     """
@@ -49,16 +51,16 @@ def test_get_unique_users(mock_convert_events_to_df,
 
     """
 
-    '''
-    # Disabled because it requires database connection to validate course
     # Case (a):
     starting_time = 1
     course_id = 'parqrrandomtest'
     mock_convert_events_to_df.return_value = unit_test_events_df
     mock_convert_db_course_to_df.return_value = unit_test_course_df
+    mock_Course.objects.return_value = False
     with pytest.raises(InvalidUsage):
         unique_user = get_unique_users(course_id, starting_time)
-    '''
+
+    mock_Course.objects.return_value = True
 
     # Case (b):
     current_time = time.time()
@@ -88,10 +90,12 @@ def test_get_unique_users(mock_convert_events_to_df,
     assert unique_user == 55
 
 
+@mock.patch('app.statistics.Course')
 @mock.patch('app.statistics.convert_db_course_to_df')
 @mock.patch('app.statistics.convert_db_posts_to_df')
 def test_total_posts_in_course(mock_convert_db_posts_to_df,
                                mock_convert_db_course_to_df,
+                               mock_Course,
                                unit_test_course_df,
                                unit_test_posts_df):
     """
@@ -103,16 +107,16 @@ def test_total_posts_in_course(mock_convert_db_posts_to_df,
 
     """
 
-    '''
-    # Disabled since it requires a database connection to validate course
     # Case (a):
     starting_time = 1
     course_id = 'parqrrandomtest'
     mock_convert_db_posts_to_df.return_value = unit_test_posts_df
     mock_convert_db_course_to_df.return_value = unit_test_course_df
+    mock_Course.objects.return_value = False
     with pytest.raises(InvalidUsage):
         total_posts = total_posts_in_course(course_id, starting_time)
-    '''
+
+    mock_Course.objects.return_value = True
 
     # Case (b):
     current_time = time.time()
@@ -123,7 +127,6 @@ def test_total_posts_in_course(mock_convert_db_posts_to_df,
     with pytest.raises(InvalidUsage):
         total_posts = total_posts_in_course(course_id, starting_time)
 
-    '''
     # Case (c)
     starting_time = 1
     course_id = 'dummycourse'
@@ -131,8 +134,6 @@ def test_total_posts_in_course(mock_convert_db_posts_to_df,
     mock_convert_db_course_to_df.return_value = unit_test_course_df
     total_posts = total_posts_in_course(course_id, starting_time)
     assert total_posts == 0
-    # This results in dummy course not being an actual cid so it fails
-    '''
 
     # Case (d)
     starting_time = 1
@@ -143,12 +144,14 @@ def test_total_posts_in_course(mock_convert_db_posts_to_df,
     assert total_posts == 544
 
 
+@mock.patch('app.statistics.Course')
 @mock.patch('app.statistics.convert_events_to_df')
 @mock.patch('app.statistics.convert_db_course_to_df')
 @mock.patch('app.statistics.convert_db_posts_to_df')
 def test_number_posts_prevented(mock_convert_db_posts_to_df,
                                 mock_convert_db_course_to_df,
                                 mock_convert_events_to_df,
+                                mock_Course,
                                 unit_test_events_df,
                                 unit_test_course_df,
                                 unit_test_posts_df):
@@ -167,17 +170,17 @@ def test_number_posts_prevented(mock_convert_db_posts_to_df,
 
     """
 
-    '''
-    # Disabled since it requires a database connection to validate course
     # Case (a)
     starting_time = 1
     course_id = 'parqrrandomtest'
     mock_convert_events_to_df.return_value = unit_test_events_df
     mock_convert_db_posts_to_df.return_value = unit_test_posts_df
     mock_convert_db_course_to_df.return_value = unit_test_course_df
+    mock_Course.objects.return_value = False
     with pytest.raises(InvalidUsage):
         num_posts_prevented = number_posts_prevented(course_id, starting_time)
-    '''
+
+    mock_Course.objects.return_value = True
 
     # Case (b)
     current_time = time.time()
@@ -242,10 +245,12 @@ def test_number_posts_prevented(mock_convert_db_posts_to_df,
     assert num_posts_prevented == 28
 
 
+@mock.patch('app.statistics.Course')
 @mock.patch('app.statistics.convert_db_course_to_df')
 @mock.patch('app.statistics.convert_db_posts_to_df')
 def test_get_top_attention_warranted_posts(mock_convert_db_posts_to_df,
                                            mock_convert_db_course_to_df,
+                                           mock_Course,
                                            unit_test_course_df,
                                            unit_test_posts_df):
     """
@@ -259,16 +264,16 @@ def test_get_top_attention_warranted_posts(mock_convert_db_posts_to_df,
            posts for different scenario
     """
 
-    '''
-    # Disabled since it requires a database connection to validate course
     # Case (a)
     number_of_posts = 5
     course_id = 'parqrrandomtest'
     mock_convert_db_posts_to_df.return_value = unit_test_posts_df
     mock_convert_db_course_to_df.return_value = unit_test_course_df
+    mock_Course.objects.return_value = False
     with pytest.raises(InvalidUsage):
         top_posts = get_top_attention_warranted_posts(course_id, number_of_posts)
-    '''
+
+    mock_Course.objects.return_value = True
 
     # Case (b)
     number_of_posts = 5
