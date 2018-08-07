@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import logging
 
@@ -6,8 +7,7 @@ import pandas as pd
 import numpy as np
 import delorean
 
-
-from app.models import Course
+from app.models import Course, Event, Post
 from app.exception import InvalidUsage
 
 
@@ -204,27 +204,11 @@ def get_unique_users(course_id, starting_time):
     if not is_starting_time_valid:
         raise InvalidUsage('Invalid starting time provided')
 
-    # Extract relevant information from mongoDB for the course_id
-    events_df = convert_events_to_df()
-
-    # Manipulations of the events_df is done in following steps:
-    # 1. Get entries for specific course_id
-    # 2. Filter entries in which time is greater than starting time
-    # 3. Group by the dataframe by user_id
-    # 4. Do a unique count and return it
-
-    filtered_events_df = events_df.loc[(events_df['course_id'] == course_id) &
-                                       (events_df['time'] / 1000 > starting_time),
-                                       ['course_id', 'time', 'event', 'user_id']]
-
-    if filtered_events_df.empty:
-        # TODO: Add a logger info note to tell that there hasn't been any event registered
-        #       for a parqr registered class
-        return 0
-    else:
-        unique_active_user_count = filtered_events_df.groupby('course_id')['user_id'].nunique().iloc[0]
-
-    return unique_active_user_count
+    starting_date_time = datetime.fromtimestamp(starting_time)
+    filtered_events = Event.objects.filter(event_data__course_id=course_id,
+                                           time__gt=starting_date_time)
+    unique_users = filtered_events.distinct('user_id')
+    return len(unique_users)
 
 
 def number_posts_prevented(course_id, starting_time):
@@ -317,8 +301,7 @@ def number_posts_prevented(course_id, starting_time):
     return int(parqr_prevented_posts)
 
 
-def total_posts_in_course(course_id,
-                          starting_time):
+def total_posts_in_course(course_id):
     """Retrieves the exact count of total posts made for a particular
     course_id from the starting time specified to current time.
 
@@ -326,9 +309,6 @@ def total_posts_in_course(course_id,
     ----------
     course_id : str
         The course id of the class
-    starting_time : int
-        Time in microseconds. This specifies the initial time from where
-        the total posts need to be calculated
 
     Return
     ------
@@ -342,19 +322,7 @@ def total_posts_in_course(course_id,
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    # Starting time must be an integer that is not more than the current
-    # time. It should be in microseconds format.
-    is_starting_time_valid = _validate_starting_time(starting_time)
-    if not is_starting_time_valid:
-        raise InvalidUsage('Invalid starting time provided')
-
-    # Extract the whole posts collection from mongo database into a dataframe
-    posts_df = convert_db_posts_to_df()
-
-    # Count of total postss
-    total_posts_course = posts_df.loc[posts_df['course_id'] == course_id]['post_id'].count()
-
-    return total_posts_course
+    return Post.objects(course_id=course_id).count()
 
 
 def _create_top_posts(posts_df,
