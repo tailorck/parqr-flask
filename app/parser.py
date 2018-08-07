@@ -1,4 +1,3 @@
-from threading import Thread
 import time
 import logging
 
@@ -7,9 +6,10 @@ from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
 from progressbar import ProgressBar
 
-from exception import InvalidUsage
 from models import Course, Post
 from utils import read_credentials, stringify_followups
+
+logger = logging.getLogger('app')
 
 
 class Parser(object):
@@ -19,8 +19,6 @@ class Parser(object):
         and password
         """
         self._piazza = Piazza()
-        self._threads = {}
-        self._logger = logging.getLogger('app')
 
         self._login()
 
@@ -34,28 +32,8 @@ class Parser(object):
         course_id : str
             The course id of the class to be updated
         """
-        if course_id in self._threads and self._threads[course_id].is_alive():
-            raise InvalidUsage('Background thread is running', 500)
-
+        logger.info("Parsing posts for course: {}".format(course_id))
         network = self._piazza.network(course_id)
-
-        # TODO: Remove threaded operations after converting to docker container
-        # deployments
-        self._threads[course_id] = Thread(target=self._update_posts,
-                                          args=(course_id, network,))
-
-        self._threads[course_id].start()
-
-    def _update_posts(self, course_id, network):
-        """Retrieves all new posts in course that are not already in database
-        and updates old posts that have been modified
-        Parameters
-        ----------
-        course_id : str
-            The course id of the class to be updated
-        network : piazza_api.network
-            A handle to the network object for the course
-        """
         stats = network.get_statistics()
         total_questions = stats['total']['questions']
         pbar = ProgressBar(maxval=total_questions)
@@ -77,8 +55,17 @@ class Parser(object):
             if post['status'] == 'deleted' or post['status'] == 'private':
                 continue
 
+            # TODO: Parse the type of the post, to indicate if the post is
+            # a note/announcement
+
             # Extract the subject, body, and tags from post
             subject, body, tags = self._extract_question_details(post)
+
+            # Extract number of unique views of the post
+            num_views = post['unique_views']
+
+            # Extract number of unresolved followups (if any)
+            num_unresolved_followups = self._extract_num_unresolved(post)
 
             # Extract the student and instructor answers if applicable
             s_answer, i_answer = self._extract_answers(post)
@@ -92,22 +79,27 @@ class Parser(object):
                 db_post = Post.objects.get(course_id=course_id, post_id=pid)
                 new_fields = dict(subject=subject, body=body,
                                   s_answer=s_answer, i_answer=i_answer,
-                                  followups=followups)
+                                  followups=followups,
+                                  num_unresolved_followups=num_unresolved_followups,
+                                  num_views=num_views)
                 is_updated = self._check_for_updates(db_post, new_fields)
 
                 if is_updated is True:
                     db_post.update(subject=subject, body=body,
                                    s_answer=s_answer, i_answer=i_answer,
-                                   followups=followups)
+                                   followups=followups,
+                                   num_unresolved_followups=num_unresolved_followups,
+                                   num_views=num_views)
             else:
                 mongo_post = Post(course_id, pid, subject, body, tags,
-                                  s_answer, i_answer, followups).save()
+                                  s_answer, i_answer, followups, num_views,
+                                  num_unresolved_followups).save()
                 course.update(add_to_set__posts=mongo_post)
 
         end_time = time.time()
         time_elapsed = end_time - start_time
-        self._logger.info('Course updated. {} posts scraped in: '
-                          '{:.2f}s'.format(total_questions, time_elapsed))
+        logger.info('Course updated. {} posts scraped in: '
+                    '{:.2f}s'.format(total_questions, time_elapsed))
 
     def _check_for_updates(self, curr_post, new_fields):
         """Checks if post has been updated since last scrape.
@@ -137,8 +129,21 @@ class Parser(object):
             return True
         elif curr_followups_str != new_followups_str:
             return True
+        elif curr_post.num_views != new_fields['num_views']:
+            return True
+        elif curr_post.num_unresolved_followups != new_fields['num_unresolved_followups']:
+            return True
 
         return False
+
+    def _extract_num_unresolved(self, post):
+        if len(post['children']) > 0:
+            unresolved_list = [post['children'][i]['no_answer']
+                               for i in range(len(post['children']))
+                               if post['children'][i]['type'] == 'followup']
+            return sum(unresolved_list)
+        else:
+            return 0
 
     def _extract_question_details(self, post):
         """Retrieves information pertaining to the question in the piazza post
@@ -235,12 +240,12 @@ class Parser(object):
             email, password = read_credentials()
             self._piazza.user_login(email, password)
         except IOError:
-            self._logger.error("File not found. Use encrypt_login.py to "
-                               "create encrypted password store")
+            logger.error("File not found. Use encrypt_login.py to "
+                         "create encrypted password store")
             self._login_with_input()
         except UnicodeDecodeError, AuthenticationError:
-            self._logger.error("Incorrect Email/Password found in "
-                               "encrypted file store")
+            logger.error("Incorrect Email/Password found in "
+                         "encrypted file store")
             self._login_with_input()
 
     def _login_with_input(self):
@@ -250,5 +255,5 @@ class Parser(object):
                 self._piazza.user_login()
                 break
             except AuthenticationError:
-                self._logger.error('Invalid Username/Password')
+                logger.error('Invalid Username/Password')
                 continue

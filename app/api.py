@@ -1,41 +1,38 @@
 from datetime import datetime, timedelta
-from hashlib import md5
 import logging
-import pdb
 
 from flask import jsonify, make_response, request
 from flask_jsonschema import JsonSchema, ValidationError
 from redis import Redis
-from rq import Queue
 from rq_scheduler import Scheduler
-import rq_dashboard
-import pandas as pd
 
 from app import app
-from app.parser import Parser
-from app.modeltrain import ModelTrain
 from app.models import Course, Event, EventData
-from app.statistics import get_unique_users, number_posts_prevented, \
-    total_posts_in_course, get_top_attention_warranted_posts, is_course_id_valid
-
-from tasksrq import parse_posts, train_models
-from exception import InvalidUsage, to_dict
-from parqr import Parqr
+from app.statistics import (
+  get_unique_users,
+  number_posts_prevented,
+  total_posts_in_course,
+  get_top_attention_warranted_posts,
+  is_course_id_valid
+)
+from app.constants import (
+    COURSE_PARSE_TRAIN_TIMEOUT_S,
+    COURSE_PARSE_TRAIN_INTERVAL_S
+)
+from app.tasksrq import parse_and_train_models
+from app.exception import InvalidUsage, to_dict
+from app.parqr import Parqr
 
 api_endpoint = '/api/'
 
 parqr = Parqr()
-parser = Parser()
-model_train = ModelTrain()
 jsonschema = JsonSchema(app)
 
 logger = logging.getLogger('app')
 
-app.config.from_object(rq_dashboard.default_settings)
-app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
-
-redis = Redis(host="redishost", port="6379", db=0)
-queue = Queue(connection=redis)
+redis_host = app.config['REDIS_HOST']
+redis_port = app.config['REDIS_PORT']
+redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
 
 logger.info('Ready to serve requests')
@@ -86,35 +83,10 @@ def register_event():
     event.event_data = EventData(**request.json['eventData'])
 
     event.save()
+    logger.info('Recorded {} event from cid {}'
+                .format(event.event_name, event.event_data.course_id))
 
     return jsonify({'message': 'success'}), 200
-
-
-@app.route(api_endpoint + 'train_all_models', methods=['POST'])
-@verify_non_empty_json_request
-def train_all_models():
-    model_train.persist_all_models()
-    return jsonify({'message': 'training all models'}), 202
-
-
-@app.route(api_endpoint + 'train_model', methods=['POST'])
-@verify_non_empty_json_request
-@jsonschema.validate('train_model')
-def train_model():
-    cid = request.json['course_id']
-    model_train.persist_model(cid)
-
-    return jsonify({'course_id': cid}), 202
-    pass
-
-
-@app.route(api_endpoint + 'course', methods=['POST'])
-@verify_non_empty_json_request
-@jsonschema.validate('course')
-def update_course():
-    course_id = request.json['course_id']
-    parser.update_posts(course_id)
-    return jsonify({'course_id': course_id}), 202
 
 
 @app.route(api_endpoint + 'similar_posts', methods=['POST'])
@@ -143,14 +115,13 @@ def register_class():
         curr_time = datetime.now()
         delayed_time = curr_time + timedelta(minutes=5)
 
-        parse_job = scheduler.schedule(scheduled_time=curr_time,
-                                       func=parse_posts,
-                                       kwargs={"course_id": cid}, interval=900)
-        train_job = scheduler.schedule(scheduled_time=delayed_time,
-                                       func=train_models,
-                                       kwargs={"course_id": cid}, interval=900)
-        redis.set(cid, ','.join([parse_job.id, train_job.id]))
-        return jsonify({'course_id': cid}), 200
+        new_course_job = scheduler.schedule(scheduled_time=datetime.now(),
+                                            func=parse_and_train_models,
+                                            kwargs={"course_id": cid},
+                                            interval=COURSE_PARSE_TRAIN_INTERVAL_S,
+                                            timeout=COURSE_PARSE_TRAIN_TIMEOUT_S)
+        redis.set(cid, new_course_job.id)
+        return jsonify({'course_id': cid}), 202
     else:
         raise InvalidUsage('Course ID already exists', 500)
 
@@ -163,10 +134,7 @@ def deregister_class():
     if redis.exists(cid):
         logger.info('Deregistering course: {}'.format(cid))
         job_id_str = redis.get(cid)
-        jobs = filter(lambda job: job.id in job_id_str,
-                      scheduler.get_jobs())
-        for job in jobs:
-            scheduler.cancel(job)
+        scheduler.cancel(job_id_str)
         redis.delete(cid)
         return jsonify({'course_id': cid}), 200
     else:
@@ -181,7 +149,7 @@ def get_parqr_stats(course_id):
         raise InvalidUsage('Invalid start time specified', 500)
     num_active_uid = get_unique_users(course_id, start_time)
     num_post_prevented = number_posts_prevented(course_id, start_time)
-    num_total_posts = total_posts_in_course(course_id, start_time)
+    num_total_posts = total_posts_in_course(course_id)
     num_all_post = float(num_total_posts + num_post_prevented)
     percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
     return jsonify({'usingParqr': num_active_uid,
@@ -204,6 +172,3 @@ def get_course_isvalid():
     course_id = request.args.get('course_id')
     is_valid = is_course_id_valid(course_id)
     return jsonify({'valid': is_valid}), 202
-
-
-
