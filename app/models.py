@@ -54,3 +54,4 @@ class Event(db.Document):
     time = db.DateTimeField(required=True)
     user_id = db.StringField(required=True)
     event_data = db.EmbeddedDocumentField(EventData, default=EventData,
+                                          required=True)
