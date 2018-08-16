@@ -7,7 +7,7 @@ from redis import Redis
 from rq_scheduler import Scheduler
 
 from app import app
-from app.models import Course, Event, EventData
+from app.models import Course, Event, EventData, User
 from app.statistics import (
     get_unique_users,
     number_posts_prevented,
@@ -172,3 +172,19 @@ def get_course_isvalid():
     course_id = request.args.get('course_id')
     is_valid = is_course_id_valid(course_id)
     return jsonify({'valid': is_valid}), 202
+
+
+@app.route('/api/users', methods=['POST'])
+@verify_non_empty_json_request
+@jsonschema.validate('user')
+def new_user():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if User.objects(username=username).first() is not None:
+        raise InvalidUsage('Username already enrolled', 400)
+
+    user = User(username=username)
+    user.hash_password(password)
+    user.save()
+    return jsonify({'username': user.username}), 201
