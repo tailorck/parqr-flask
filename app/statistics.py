@@ -378,12 +378,12 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
         return map(_create_top_post, posts)
 
     # Pick out posts with no instructor answer
-    posts = posts(i_answer__exists=False)
+    posts = posts.filter(i_answer__exists=False)
     if posts.count() <= number_of_posts:
         return map(_create_top_post, posts)
 
     # Pick out posts with no instructor or student answer
-    posts = posts(s_answer__exists=False)
+    posts = posts.filter(s_answer__exists=False)
     if posts.count() <= number_of_posts:
         return map(_create_top_post, posts)
 
