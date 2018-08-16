@@ -362,9 +362,11 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
         # properties includes [# unresolved followups, # views, 
         #                      has_instructor_answer, has_student_answer, tags]
         properties = ["{} unresolved followups".format(post.num_unresolved_followups), 
-                      "{} views".format(post.num_views),
-                      "No Instructor answers"]
-        if post.s_answer:
+                      "{} views".format(post.num_views)]
+
+        if not post.i_answer:
+            properties.append("No Instructor answers")
+        if not post.s_answer:
             properties.append("No Student answers")
         if post.tags:
             properties.append("Tags - {}".format(", ".join(post.tags)))
