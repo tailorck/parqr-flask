@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import logging
 
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 import pandas as pd
 import numpy as np
 import delorean
@@ -352,8 +352,7 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    posts = Post.objects(course_id=course_id, tags__nin='announcements',
-                         i_answer__exists=False)
+    posts = Post.objects(course_id=course_id, tags__nin='announcements')
 
     def _create_top_post(post):
         post_data = {}
@@ -375,6 +374,23 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
 
     if posts.count() <= number_of_posts:
         return map(_create_top_post, posts)
+
+    # Pick out posts with no instructor answer
+    posts = posts(i_answer__exists=False)
+    if posts.count() <= number_of_posts:
+        return map(_create_top_post, posts)
+
+    # Pick out posts with no instructor or student answer
+    posts = posts(s_answer__exists=False)
+    if posts.count() <= number_of_posts:
+        return map(_create_top_post, posts)
+
+    # Otherwise, return the n top posts sorted by number of unresolved followup
+    # questions and views
+    posts.sort([('num_unresolved_followups', DESCENDING),
+                ('num_views', DESCENDING)])
+    n_posts = min(posts.count(), number_of_posts)
+    return map(_create_top_post, posts[:n_posts])
 
     # posts_df = posts_df.loc[posts_df['course_id'] == course_id]
 
