@@ -13,7 +13,6 @@ from app.exception import InvalidUsage
 
 logger = logging.getLogger('app')
 
-
 def convert_db_posts_to_df():
     """This function converts the db.parqr.post collection into a dataframe,
     allowing faster calculations for the stats module
@@ -325,65 +324,6 @@ def total_posts_in_course(course_id):
     return Post.objects(course_id=course_id).count()
 
 
-def _create_top_posts(posts_df, has_instructor_answer, has_student_answer,
-                      number_of_posts):
-    # Reset index of the dataframe passed. This will help in
-    # iterating over its indexes
-    posts_df = posts_df.reset_index()
-
-    top_n_posts = []
-
-    for i in range(number_of_posts):
-        # Dictionary to store data for each of the posts returned
-        # Keys of the dictionary:
-        # a) title
-        # b) post_id
-        # c) properties
-        warranted_posts = {}
-
-        # List of strings to store different properties of the post. Properties
-        # include -
-        # a) Number of unresolved followups
-        # b) Number of views on the post'
-        # c) Is instructor answer to the post present
-        # d) Is student answer to the post present
-        # e) Tags of the post
-        property_of_a_single_post = []
-
-        # Set value for title key
-        warranted_posts["title"] = posts_df.loc[i]["subject"]
-
-        # Set value for post_id key
-        warranted_posts["post_id"] = posts_df.loc[i]["post_id"]
-
-        # Create the properties list to be put into the list
-        string_instructor_answer = "No Instructor answers"
-        string_student_answer = "No Student answers"
-        string_tags = "Tags - " + str(", ".join(posts_df.loc[i]["tags"]))
-        string_num_views = str(int(posts_df.loc[i]["num_views"])) + " views"
-        string_unresolved_followup = str(int(posts_df.loc[i]["num_unresolved_followups"])) \
-                                     + " unresolved followups"
-
-        property_of_a_single_post.append(string_unresolved_followup)
-        property_of_a_single_post.append(string_num_views)
-
-        if has_instructor_answer:
-            property_of_a_single_post.append(string_instructor_answer)
-        if has_student_answer:
-            property_of_a_single_post.append(string_student_answer)
-        if posts_df.loc[i]["tags"]:
-            property_of_a_single_post.append(string_tags)
-
-        # Set value for the properties key
-        warranted_posts["properties"] = property_of_a_single_post
-
-        # Append the dictionary into a list of top posts which need
-        # attention
-        top_n_posts.append(warranted_posts)
-
-    return top_n_posts
-
-
 def get_top_attention_warranted_posts(course_id, number_of_posts):
     """Retrieves the top posts for a specific tag, for a specific course,
     with the search time being [starting_time, now). The following are the
@@ -412,45 +352,66 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    # Extract the whole posts collection in mongo database into a dataframe
-    posts_df = convert_db_posts_to_df()
+    posts = Post.objects(course_id=course_id, tags__nin='announcements',
+                         i_answer__exists=False)
 
-    posts_df = posts_df.loc[posts_df['course_id'] == course_id]
+    def _create_top_post(post):
+        post_data = {}
+        post_data["title"] = post.subject
+        post_data["post_id"] = post.post_id
 
-    # Order of things to do:
-    # 1) Remove all posts which are tagged as announcements
-    posts_df_no_ann = posts_df[posts_df['tags'].apply(
-        lambda x: 'announcements' not in x)]
+        # properties includes [# unresolved followups, # views, 
+        #                      has_instructor_answer, has_student_answer, tags]
+        properties = ["{} unresolved followups".format(post.num_unresolved_followups), 
+                      "{} views".format(post.num_views),
+                      "No Instructor answers"]
+        if post.s_answer:
+            properties.append("No Student answers")
+        if post.tags:
+            properties.append("Tags - {}".format(", ".join(post.tags)))
 
-    # 2) Pick out posts with no instructor answer
-    posts_df_no_ann_i_null = posts_df_no_ann[posts_df_no_ann['i_answer'].isnull()]
+        post_data["properties"] = properties
+        return post_data
 
-    # Check if the number of posts remaining in posts_df_no_ann_i_null is
-    # less than the number of posts to return
-    if posts_df_no_ann_i_null.shape[0] <= number_of_posts:
-        number_of_posts = posts_df_no_ann_i_null.shape[0]
-        top_n_posts = _create_top_posts(posts_df_no_ann_i_null, 1, 0,
-                                        number_of_posts)
-        return top_n_posts
+    if posts.count() <= number_of_posts:
+        return map(_create_top_post, posts)
 
-    # 3) Pick out posts with no student answers
-    posts_df_no_ann_i_s_null = posts_df_no_ann_i_null[ \
-        posts_df_no_ann_i_null['s_answer'].isnull()]
+    # posts_df = posts_df.loc[posts_df['course_id'] == course_id]
 
-    if posts_df_no_ann_i_s_null.shape[0] <= number_of_posts:
-        number_of_posts = posts_df_no_ann_i_s_null.shape[0]
-        top_n_posts = _create_top_posts(posts_df_no_ann_i_s_null, 1, 1,
-                                        number_of_posts)
-        return top_n_posts
+    # # Order of things to do:
+    # # 1) Remove all posts which are tagged as announcements
+    # posts_df_no_ann = posts_df[posts_df['tags'].apply(
+    #     lambda x: 'announcements' not in x)]
 
-    # 4) Sort the dataframe by descending order of number of unresolved
-    #    followup questions and number of views on the post
-    posts_top_att_warr = posts_df_no_ann_i_s_null.sort_values(
-        by=['num_unresolved_followups', 'num_views'],
-        ascending=[False, False])
+    # # 2) Pick out posts with no instructor answer
+    # posts_df_no_ann_i_null = posts_df_no_ann[posts_df_no_ann['i_answer'].isnull()]
 
-    number_of_posts = min(posts_top_att_warr.shape[0], number_of_posts)
+    # # Check if the number of posts remaining in posts_df_no_ann_i_null is
+    # # less than the number of posts to return
+    # if posts_df_no_ann_i_null.shape[0] <= number_of_posts:
+    #     number_of_posts = posts_df_no_ann_i_null.shape[0]
+    #     top_n_posts = _create_top_posts(posts_df_no_ann_i_null, 1, 0,
+    #                                     number_of_posts)
+    #     return top_n_posts
 
-    top_n_posts = _create_top_posts(posts_top_att_warr, 1, 1,
-                                    number_of_posts)
-    return top_n_posts
+    # # 3) Pick out posts with no student answers
+    # posts_df_no_ann_i_s_null = posts_df_no_ann_i_null[ \
+    #     posts_df_no_ann_i_null['s_answer'].isnull()]
+
+    # if posts_df_no_ann_i_s_null.shape[0] <= number_of_posts:
+    #     number_of_posts = posts_df_no_ann_i_s_null.shape[0]
+    #     top_n_posts = _create_top_posts(posts_df_no_ann_i_s_null, 1, 1,
+    #                                     number_of_posts)
+    #     return top_n_posts
+
+    # # 4) Sort the dataframe by descending order of number of unresolved
+    # #    followup questions and number of views on the post
+    # posts_top_att_warr = posts_df_no_ann_i_s_null.sort_values(
+    #     by=['num_unresolved_followups', 'num_views'],
+    #     ascending=[False, False])
+
+    # number_of_posts = min(posts_top_att_warr.shape[0], number_of_posts)
+
+    # top_n_posts = _create_top_posts(posts_top_att_warr, 1, 1,
+    #                                 number_of_posts)
+    # return top_n_posts
