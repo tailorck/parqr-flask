@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
+from collections import namedtuple
 import logging
 
 from flask import jsonify, make_response, request
 from flask_jsonschema import JsonSchema, ValidationError
+from flask_httpauth import HTTPBasicAuth
+from flask_jwt import JWT, jwt_required
 from redis import Redis
 from rq_scheduler import Scheduler
 
@@ -34,6 +37,7 @@ redis_host = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']
 redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
+auth = HTTPBasicAuth()
 
 logger.info('Ready to serve requests')
 
@@ -188,3 +192,25 @@ def new_user():
     user.hash_password(password)
     user.save()
     return jsonify({'username': user.username}), 201
+
+
+def verify(username, password):
+    Identity = namedtuple('Identity', ['id'])
+    user = User.objects(username=username).first()
+    if not user or not user.verify_password(password):
+        return False
+    return Identity(str(user.pk))
+
+
+def identity(payload):
+    user_id = payload['identity']
+    return User.objects(pk=user_id).first()
+
+
+jwt = JWT(app, verify, identity)
+
+
+@app.route('/api/resource', methods=['GET'])
+@jwt_required()
+def get_resource():
+    return jsonify({'data': 'some_resource'})
