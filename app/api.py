@@ -210,7 +210,7 @@ def identity(payload):
 jwt = JWT(app, verify, identity)
 
 
-@app.route('/api/resource', methods=['GET'])
+@app.route('/api/class', methods=['GET'])
 @jwt_required()
 def get_resource():
-    return jsonify({'data': 'some_resource'})
+    return jsonify(Course.objects.values_list('course_id'))
