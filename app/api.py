@@ -24,11 +24,13 @@ from app.constants import (
 )
 from app.tasksrq import parse_and_train_models
 from app.exception import InvalidUsage, to_dict
+from app.parser import Parser
 from app.parqr import Parqr
 
 api_endpoint = '/api/'
 
 parqr = Parqr()
+parser = Parser()
 jsonschema = JsonSchema(app)
 
 logger = logging.getLogger('app')
@@ -216,3 +218,9 @@ jwt = JWT(app, verify, identity)
 @jwt_required()
 def get_resource():
     return jsonify(Course.objects.values_list('course_id'))
+
+
+@app.route('/api/enrolled_classes', methods=['GET'])
+@jwt_required()
+def get_enrolled_classes():
+    return jsonify(parser.get_enrolled_courses())
