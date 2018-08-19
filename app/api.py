@@ -216,7 +216,7 @@ jwt = JWT(app, verify, identity)
 
 @app.route('/api/class', methods=['GET'])
 @jwt_required()
-def get_resource():
+def get_supported_classes():
     return jsonify(Course.objects.values_list('course_id'))
 
 
