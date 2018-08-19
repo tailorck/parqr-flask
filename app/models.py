@@ -15,7 +15,7 @@ class Post(db.Document):
     post_id = db.IntField(required=True, unique_with='course_id')
     subject = db.StringField(required=True)
     body = db.StringField(required=True)
-    tags = db.ListField(db.StringField(), required=True)
+    tags = db.ListField(db.StringField())
     s_answer = db.StringField()
     i_answer = db.StringField()
     followups = db.ListField(db.EmbeddedDocumentField(Followup))
