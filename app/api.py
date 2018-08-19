@@ -112,6 +112,7 @@ def similar_posts():
 @app.route(api_endpoint + 'class', methods=['POST'])
 @verify_non_empty_json_request
 @jsonschema.validate('class')
+@jwt_required()
 def register_class():
     cid = request.json['course_id']
     if not redis.exists(cid):
@@ -133,6 +134,7 @@ def register_class():
 @app.route(api_endpoint + 'class', methods=['DELETE'])
 @verify_non_empty_json_request
 @jsonschema.validate('class')
+@jwt_required()
 def deregister_class():
     cid = request.json['course_id']
     if redis.exists(cid):
