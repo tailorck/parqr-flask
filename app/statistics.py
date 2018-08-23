@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import logging
 
-from pymongo import MongoClient, DESCENDING
+from pymongo import MongoClient, DESCENDING, ASCENDING
 import pandas as pd
 import numpy as np
 import delorean
@@ -159,18 +159,20 @@ def number_posts_prevented(course_id, starting_time):
 
     # Extract relevant information from mongoDB for the course_id
     events_df = convert_events_to_df()
+    events = Events.objects(course_id=course_id, time__gt=1000 * starting_time)
+    events.sort([('user_id', ASCENDING), ('time', ASCENDING)])
 
-    # 1. Filter events_df based on course_id and starting time
-    # 2. Reset Indexes of the resulting dataframe
-    events_df_course_id = events_df.loc[(events_df['course_id'] == course_id) &
-                                        (events_df['time'] / 1000 > starting_time),
-                                        ['course_id', 'time', 'event', 'user_id']] \
-                                   .reset_index(drop=True)
+    # # 1. Filter events_df based on course_id and starting time
+    # # 2. Reset Indexes of the resulting dataframe
+    # events_df_course_id = events_df.loc[(events_df['course_id'] == course_id) &
+    #                                     (events_df['time'] / 1000 > starting_time),
+    #                                     ['course_id', 'time', 'event', 'user_id']] \
+    #                                .reset_index(drop=True)
 
-    # 1. Sort in ascending order by columns - user_id and time
-    events_df_course_id_sorted = events_df_course_id.sort_values(by=['user_id',
-                                                                     'time'],
-                                                                 ascending=[True, True]).reset_index(drop=True)
+    # # 1. Sort in ascending order by columns - user_id and time
+    # events_df_course_id_sorted = events_df_course_id.sort_values(by=['user_id',
+    #                                                                  'time'],
+    #                                                              ascending=[True, True]).reset_index(drop=True)
 
     # There may be possible duplicate entries in the database with same events
     # being logged in a continuous format. This is not a logging issue, but arises
