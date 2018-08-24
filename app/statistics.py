@@ -14,59 +14,6 @@ from app.exception import InvalidUsage
 logger = logging.getLogger('app')
 
 
-def convert_events_to_df():
-    """This function converts the db.event collection into a dataframe,
-    allowing faster calculations for the stats module
-
-    Sample events_df schema is as below
-
-    {
-        _id: bson.objectid.ObjectId,
-        event_data: dict(list(course_ids)),
-        event_name: unicode,
-        event_type: unicode,
-        time: pandas._libs.tslib.Timestamp,
-        user_id: unicode
-    )
-
-    Return
-    ------
-    events_df : Dataframe with four columns
-        An events dataframe which has all the information stored as part of
-        the 'event' collention in mongo database.
-
-    """
-
-    # Step 1.
-    # Make a connection to the Mongo Database using pymongo
-    connection = MongoClient()
-
-    # Step 2.
-    # Get the required database. To Do - If not hardcode 'parqr', then what ?
-    database = connection.parqr
-
-    # Step 3.
-    # Get the required collection. To Do - If not hardcode 'event', then what ?
-    collection = database.event
-
-    # Step 4.
-    # Convert the entire collection into pandas dataframe with column names as
-    # the mongo database
-    events_df = pd.DataFrame(list(collection.find()))
-
-    feature_list = ['course_id', 'time', 'event', 'user_id']
-    df = pd.DataFrame(0, index=np.arange(events_df.shape[0]), columns=feature_list)
-
-    for i in range(events_df.shape[0]):
-        df.loc[i, 'course_id'] = events_df.loc[i, 'event_data']['course_id']
-        time_since_epoch = delorean.Delorean(events_df.loc[i, 'time'], timezone="UTC").epoch
-        df.loc[i, 'time'] = time_since_epoch
-        df.loc[i, 'event'] = events_df.loc[i, 'event_name']
-        df.loc[i, 'user_id'] = events_df.loc[i, 'user_id']
-
-    return df
-
-
 def is_course_id_valid(course_id):
     """A check to see if the course_id has parqr installed over it or not
 
@@ -161,18 +108,7 @@ def number_posts_prevented(course_id, starting_time):
     events_df = convert_events_to_df()
     events = Events.objects(course_id=course_id, time__gt=1000 * starting_time)
     events.sort([('user_id', ASCENDING), ('time', ASCENDING)])
-
-    # # 1. Filter events_df based on course_id and starting time
-    # # 2. Reset Indexes of the resulting dataframe
-    # events_df_course_id = events_df.loc[(events_df['course_id'] == course_id) &
-    #                                     (events_df['time'] / 1000 > starting_time),
-    #                                     ['course_id', 'time', 'event', 'user_id']] \
-    #                                .reset_index(drop=True)
-
-    # # 1. Sort in ascending order by columns - user_id and time
-    # events_df_course_id_sorted = events_df_course_id.sort_values(by=['user_id',
-    #                                                                  'time'],
-    #                                                              ascending=[True, True]).reset_index(drop=True)
+    events_df_course_id_sorted = pd.DataFrame(list(events)) #TODO double check this
 
     # There may be possible duplicate entries in the database with same events
     # being logged in a continuous format. This is not a logging issue, but arises
