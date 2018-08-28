@@ -106,9 +106,12 @@ def number_posts_prevented(course_id, starting_time):
 
     # Extract relevant information from mongoDB for the course_id
     events_df = convert_events_to_df()
-    events = Events.objects(course_id=course_id, time__gt=1000 * starting_time)
+    starting_datetime = datetime.fromtimestamp(1000 * starting_time)
+    events = Event.objects(event_data__course_id=course_id, 
+                            time__gt=starting_datetime)
     # events.sort([('user_id', ASCENDING), ('time', ASCENDING)])
-    events.order_by('user_id', 'time')
+    events = events.order_by('user_id', 'time')
+    # FIXME this list conversion
     events_df_course_id_sorted = pd.DataFrame(list(events)) #TODO double check this
 
     # There may be possible duplicate entries in the database with same events
@@ -243,8 +246,6 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
 
     # Otherwise, return the n top posts sorted by number of unresolved followup
     # questions and views
-    # posts.sort([('num_unresolved_followups', DESCENDING),
-    #             ('num_views', DESCENDING)])
-    posts.order_by('-num_unresolved_followups', '-num_views')
+    posts = posts.order_by('-num_unresolved_followups', '-num_views')
     n_posts = min(posts.count(), number_of_posts)
     return map(_create_top_post, posts[:n_posts])
