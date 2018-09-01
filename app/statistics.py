@@ -5,7 +5,6 @@ import logging
 from pymongo import MongoClient, DESCENDING, ASCENDING
 import pandas as pd
 import numpy as np
-import delorean
 
 from app.models import Course, Event, Post
 from app.exception import InvalidUsage
@@ -72,6 +71,19 @@ def get_unique_users(course_id, starting_time):
     return len(unique_users)
 
 
+def bqs_to_df(bqs):
+    """
+    Converts a mongo BaseQuerySet (the result of a filtered query) to a pandas
+    dataframe
+
+    :param bqs: BaseQuerySet to be converted
+    :type bqs: flask_mongoengine.BaseQuerySet
+
+    :return: dataframe whose rows are individual events
+    """
+    feature_list = ['course_id', 'time', 'event', 'user_id']
+
+
 def number_posts_prevented(course_id, starting_time):
     """Retrieves the exact number of new posts that parqr prevents.
        Without the actual knowledge of post_id at the time of writing a new post,
@@ -105,13 +117,13 @@ def number_posts_prevented(course_id, starting_time):
         raise InvalidUsage('Invalid start time provided')
 
     # Extract relevant information from mongoDB for the course_id
-    events_df = convert_events_to_df()
     starting_datetime = datetime.fromtimestamp(1000 * starting_time)
     events = Event.objects(event_data__course_id=course_id, 
                             time__gt=starting_datetime)
     # events.sort([('user_id', ASCENDING), ('time', ASCENDING)])
     events = events.order_by('user_id', 'time')
     # FIXME this list conversion
+
     events_df_course_id_sorted = pd.DataFrame(list(events)) #TODO double check this
 
     # There may be possible duplicate entries in the database with same events
@@ -209,7 +221,8 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    posts = Post.objects(course_id=course_id, tags__nin='announcements')
+    posts = Post.objects(course_id=course_id, tags__nin=['announcements',
+                                                         'instructor-note'])
 
     def _create_top_post(post):
         post_data = {}
