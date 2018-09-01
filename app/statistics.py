@@ -221,8 +221,8 @@ def get_top_attention_warranted_posts(course_id, number_of_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    posts = Post.objects(course_id=course_id, tags__nin=['announcements',
-                                                         'instructor-note'])
+    posts = Post.objects(course_id=course_id, post_type='question',
+                         tags__nin=['instructor-question'])
 
     def _create_top_post(post):
         post_data = {}
