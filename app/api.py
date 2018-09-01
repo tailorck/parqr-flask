@@ -156,13 +156,13 @@ def get_parqr_stats(course_id):
     except ValueError, TypeError:
         raise InvalidUsage('Invalid start time specified', 400)
     num_active_uid = get_unique_users(course_id, start_time)
-    # num_post_prevented = number_posts_prevented(course_id, start_time)
+    num_post_prevented = number_posts_prevented(course_id, start_time)
     num_total_posts = total_posts_in_course(course_id)
-    # num_all_post = float(num_total_posts + num_post_prevented)
-    # percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
-    return jsonify({'usingParqr': num_active_uid,}), 202
-                    # 'assistedCount': num_post_prevented,
-                    # 'percentTrafficReduced': percent_traffic_reduced}), 202
+    num_all_post = float(num_total_posts + num_post_prevented)
+    percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
+    return jsonify({'usingParqr': num_active_uid,
+                    'assistedCount': num_post_prevented,
+                    'percentTrafficReduced': percent_traffic_reduced}), 202
 
 
 @app.route(api_endpoint + 'class/<course_id>/attentionposts', methods=['GET'])
