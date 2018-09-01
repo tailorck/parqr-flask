@@ -71,7 +71,7 @@ def get_unique_users(course_id, starting_time):
     return len(unique_users)
 
 
-def bqs_to_df(bqs):
+def events_bqs_to_df(bqs):
     """
     Converts a mongo BaseQuerySet (the result of a filtered query) to a pandas
     dataframe
@@ -81,7 +81,12 @@ def bqs_to_df(bqs):
 
     :return: dataframe whose rows are individual events
     """
-    feature_list = ['course_id', 'time', 'event', 'user_id']
+    return pd.DataFrame.from_dict({
+        'course_id': [event.event_data.course_id for event in bqs],
+        'time': [event.time for event in bqs],
+        'event': [event.event_name for event in bqs],
+        'user_id': [event.user_id for event in bqs]
+        })
 
 
 def number_posts_prevented(course_id, starting_time):
@@ -122,9 +127,8 @@ def number_posts_prevented(course_id, starting_time):
                             time__gt=starting_datetime)
     # events.sort([('user_id', ASCENDING), ('time', ASCENDING)])
     events = events.order_by('user_id', 'time')
-    # FIXME this list conversion
 
-    events_df_course_id_sorted = pd.DataFrame(list(events)) #TODO double check this
+    events_df_course_id_sorted = events_bqs_to_df(events)
 
     # There may be possible duplicate entries in the database with same events
     # being logged in a continuous format. This is not a logging issue, but arises
