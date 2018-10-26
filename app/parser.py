@@ -117,6 +117,8 @@ class Parser(object):
 
                 if is_updated is True:
                     db_post.update(subject=subject, created=created, body=body,
+                                   tags=tags
+                                   post_type=post_type,
                                    s_answer=s_answer, i_answer=i_answer,
                                    followups=followups,
                                    num_unresolved_followups=num_unresolved_followups,
