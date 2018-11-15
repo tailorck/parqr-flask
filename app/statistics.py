@@ -89,7 +89,7 @@ def events_bqs_to_df(bqs):
     })
 
 
-def clicks_statistics(course_id, starting_time):
+def _clicks_statistics(course_id, starting_time):
     """Retrieves statistics of number of clicks on parqr recommendations.
        Following click events are of importance:
         1) Click on parqr recommendation when new post is being typed
@@ -105,8 +105,8 @@ def clicks_statistics(course_id, starting_time):
         Time in microseconds. This specifies the initial time from where
         the number of prevented posts are to be reported
 
-    Return
-    ------
+    Used internally for
+    -------------------
     click_parqr_new_post : int
     click_student_recommendations : int
     click_instructor_dashboard : int
@@ -126,10 +126,35 @@ def clicks_statistics(course_id, starting_time):
     starting_datetime = datetime.fromtimestamp(starting_time)
     events = Event.objects(event_data__course_id=course_id,
                             time__gt=starting_datetime)
+
+    return events
+
+def get_click_parqr_new_post(course_id, starting_time):
+
+    #Input check is happening in helper function - _clicks_statistics
+    events = _clicks_statistics(course_id, starting_time)
     click_parqr_new_post = events.filter(event_name='clickedSuggestion').count()
+
+    return int(click_parqr_new_post)
+
+
+def get_click_student_recommendations(course_id, starting_time):
+
+    #Input check is happening in helper function - _clicks_statistics
+    events = _clicks_statistics(course_id, starting_time)
     click_student_recommendations = events.filter(event_name='clickedStudentSuggestion').count()
+
+    return int(click_student_recommendations)
+
+
+def get_click_instructor_dashboard(course_id, starting_time):
+
+    #Input check is happening in helper function - _clicks_statistics
+    events = _clicks_statistics(course_id, starting_time)
     click_instructor_dashboard = events.filter(event_name='clickedTopAttentionPost').count()
-    return int(click_parqr_new_post), int(click_student_recommendations), int(click_instructor_dashboard)
+
+    return int(click_instructor_dashboard)
+
 
 def number_posts_prevented(course_id, starting_time):
     """Retrieves the exact number of new posts that parqr prevents.
