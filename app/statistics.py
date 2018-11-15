@@ -34,6 +34,20 @@ def _validate_starting_time(starting_time):
     return True if (current_time > starting_time) else False
 
 
+def check_inputs(course_id, starting_time):
+    # Sanity check to see if the course_id sent is valid course_id or not
+    is_valid = is_course_id_valid(course_id)
+    if not is_valid:
+        raise InvalidUsage('Invalid course id provided')
+
+    # Starting time must be an integer that is not more than the current
+    # time. It should be in microseconds format.
+    is_starting_time_valid = _validate_starting_time(starting_time)
+    if not is_starting_time_valid:
+        raise InvalidUsage('Invalid starting time provided')
+
+
+
 def get_unique_users(course_id, starting_time):
     """Retrieves the exact count of unique users in course that were active
     users of PARQR from the starting time specified to current time.
@@ -53,16 +67,7 @@ def get_unique_users(course_id, starting_time):
         and current time (now).
     """
 
-    # Sanity check to see if the course_id sent is valid course_id or not
-    is_valid = is_course_id_valid(course_id)
-    if not is_valid:
-        raise InvalidUsage('Invalid course id provided')
-
-    # Starting time must be an integer that is not more than the current
-    # time. It should be in microseconds format.
-    is_starting_time_valid = _validate_starting_time(starting_time)
-    if not is_starting_time_valid:
-        raise InvalidUsage('Invalid starting time provided')
+    check_inputs(course_id, starting_time)
 
     starting_date_time = datetime.fromtimestamp(starting_time)
     filtered_events = Event.objects.filter(event_data__course_id=course_id,
@@ -111,16 +116,7 @@ def _clicks_statistics(course_id, starting_time):
     click_student_recommendations : int
     click_instructor_dashboard : int
     """
-    # Sanity check to see if the course_id sent is valid course_id or not
-    is_valid = is_course_id_valid(course_id)
-    if not is_valid:
-        raise InvalidUsage('Invalid course id provided')
-
-    # Starting time must be an integer that is not more than the current
-    # time. It should be in microseconds format.
-    is_starting_time_valid = _validate_starting_time(starting_time)
-    if not is_starting_time_valid:
-        raise InvalidUsage('Invalid start time provided')
+    check_inputs(course_id, starting_time)
 
     # Extract relevant information from mongoDB for the course_id
     starting_datetime = datetime.fromtimestamp(starting_time)
@@ -156,7 +152,7 @@ def get_click_instructor_dashboard(course_id, starting_time):
     return int(click_instructor_dashboard)
 
 
-def number_posts_prevented(course_id, starting_time):
+def _number_posts_prevented(course_id, starting_time):
     """Retrieves the exact number of new posts that parqr prevents.
        Without the actual knowledge of post_id at the time of writing a new post,
        the below calculations are an approximate.
@@ -180,17 +176,8 @@ def number_posts_prevented(course_id, starting_time):
         total public posts of a class
     """
 
-    # Sanity check to see if the course_id sent is valid course_id or not
-    is_valid = is_course_id_valid(course_id)
-    if not is_valid:
-        raise InvalidUsage('Invalid course id provided')
-
-    # Starting time must be an integer that is not more than the current
-    # time. It should be in microseconds format.
-    is_starting_time_valid = _validate_starting_time(starting_time)
-    if not is_starting_time_valid:
-        raise InvalidUsage('Invalid start time provided')
-
+    check_inputs(course_id, starting_time)
+    
     # Extract relevant information from mongoDB for the course_id
     starting_datetime = datetime.fromtimestamp(starting_time)
     events = Event.objects(event_data__course_id=course_id, 
@@ -237,10 +224,22 @@ def number_posts_prevented(course_id, starting_time):
     df_final.loc[df_final['parqr_wins'] < 0] = 0
 
     sum_row = df_final.sum(axis=0)
-    posts_by_parqr_users = sum_row['postSubmitted']
-    parqr_prevented_posts = sum_row['parqr_wins']
+    return sum_row
 
-    return int(parqr_prevented_posts), int(posts_by_parqr_users)
+
+def weekly_posts_prevented(course_id, starting_time):
+    sum_row = _number_posts_prevented(course_id, starting_time)
+    return sum_row['parqr_wins']
+
+
+def weekly_posts_by_parqr_users(course_id, starting_time):
+    sum_row = _number_posts_prevented(course_id, starting_time)
+    return sum_row['postSubmitted']
+
+
+def number_posts_prevented(course_id, starting_time):
+    sum_row = _number_posts_prevented(course_id, starting_time)
+    return sum_row['parqr_wins'], sum_row['postSubmitted']
 
 
 def total_posts_in_course(course_id):
@@ -421,3 +420,70 @@ def get_stud_att_needed_posts(course_id, num_posts):
     filtered_posts = Post.objects(course_id=course_id,
                                   post_id__in=posts_df.head(num_posts).post_id)
     return map(_create_top_post, filtered_posts)
+
+
+def get_weekly_statistics(course_id, statistical_function):
+    """Get weekly statistics of a specified course.
+    Usage
+    -----
+    get_weekly_statistics(course_id, statistical_function=get_unique_users)
+    get_weekly_statistics(course_id, statistical_function=get_click_parqr_new_post)
+    get_weekly_statistics(course_id, statistical_function=get_click_student_recommendations)
+    get_weekly_statistics(course_id, statistical_function=get_click_instructor_dashboard)
+    get_weekly_statistics(course_id, statistical_function=weekly_posts_prevented)
+    get_weekly_statistics(course_id, statistical_function=weekly_posts_by_parqr_users)
+
+    Parameters
+    ----------
+    course_id : str
+        The course id of the class
+    semester : str
+    Return
+    ------
+    weekly_stats : list of dictionary
+    """
+    # Sanity check to see if the course_id sent is valid course_id or not
+    is_valid = is_course_id_valid(course_id)
+    if not is_valid:
+        raise InvalidUsage('Invalid course id provided')
+
+    #TODO: Change the hard coding of semester
+    semester = 'fall2018'
+
+    epoch_now = int(time.time())
+    def _get_start_of_semester(semester):
+        epoch = datetime(1970,1,1)
+        if semester == 'fall2018':
+            # Get better in date calculation - use datetime.datetime === date = 7* sdkalfkls
+            start_of_sem = datetime(2018, 8, 20, 0, 0, 0)
+            return int((start_of_sem - epoch).total_seconds())
+
+    def _initialize_dictionary(semester, now):
+        start_of_sem = _get_start_of_semester(semester)
+        each_week = 60*60*24*7
+        week_count = 0
+        weekly_stat_dic = {}
+
+        while(start_of_sem < now):
+            key = week_count
+            weekly_stat_dic[key] = start_of_sem
+            start_of_sem = start_of_sem + each_week
+            week_count = week_count + 1
+
+        return weekly_stat_dic
+
+    weekly_stats = _initialize_dictionary(semester, epoch_now)
+    last_weekly_stat = 0
+
+    keys = sorted([key for key in weekly_stats.keys()])
+
+    original = statistical_function(course_id, weekly_stats[keys[0]])
+    for index in range(0, len(keys) - 1):
+    #for key in sorted(weekly_unique_users.keys()):
+        next_week = statistical_function(course_id, weekly_stats[keys[index + 1]])
+        weekly_stats[keys[index]] = original - next_week
+        original = next_week 
+
+    weekly_stats[keys[len(keys) - 1]] = statistical_function(course_id, weekly_stats[keys[len(keys) - 1]])
+
+    return weekly_stats
