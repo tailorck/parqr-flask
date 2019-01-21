@@ -114,7 +114,7 @@ def similar_posts():
     return jsonify(similar_posts)
 
 
-@app.route(api_endpoint + 'instructor_rec', methods=['POST'])
+@app.route(api_endpoint + 'answer_recommendations', methods=['POST'])
 @verify_non_empty_json_request
 @jsonschema.validate('query')
 def instructor_rec():
