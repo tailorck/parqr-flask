@@ -94,12 +94,8 @@ def events_bqs_to_df(bqs):
     })
 
 
-def _clicks_statistics(course_id, starting_time):
-    """Retrieves statistics of number of clicks on parqr recommendations.
-       Following click events are of importance:
-        1) Click on parqr recommendation when new post is being typed
-        2) Click on student recommendations from piazza homepage
-        3) Click on instructor suggested posts from instructor dashboard
+def _get_click_events(course_id, starting_time):
+    """Retrieves click related events filtered on course_id and starting time..
 
     Parameters
     ----------
@@ -125,28 +121,28 @@ def _clicks_statistics(course_id, starting_time):
 
     return events
 
-def get_click_parqr_new_post(course_id, starting_time):
+def get_num_new_post_clicks(course_id, starting_time):
 
-    #Input check is happening in helper function - _clicks_statistics
-    events = _clicks_statistics(course_id, starting_time)
+    #Input check is happening in helper function - _get_click_events
+    events = _get_click_events(course_id, starting_time)
     click_parqr_new_post = events.filter(event_name='clickedSuggestion').count()
 
     return int(click_parqr_new_post)
 
 
-def get_click_student_recommendations(course_id, starting_time):
+def get_num_student_recommendation_clicks(course_id, starting_time):
 
-    #Input check is happening in helper function - _clicks_statistics
-    events = _clicks_statistics(course_id, starting_time)
+    #Input check is happening in helper function - _get_click_events
+    events = _get_click_events(course_id, starting_time)
     click_student_recommendations = events.filter(event_name='clickedStudentSuggestion').count()
 
     return int(click_student_recommendations)
 
 
-def get_click_instructor_dashboard(course_id, starting_time):
+def get_num_instructor_dashboard_clicks(course_id, starting_time):
 
-    #Input check is happening in helper function - _clicks_statistics
-    events = _clicks_statistics(course_id, starting_time)
+    #Input check is happening in helper function - _get_click_events
+    events = _get_click_events(course_id, starting_time)
     click_instructor_dashboard = events.filter(event_name='clickedTopAttentionPost').count()
 
     return int(click_instructor_dashboard)
@@ -427,9 +423,9 @@ def get_weekly_statistics(course_id, statistical_function):
     Usage
     -----
     get_weekly_statistics(course_id, statistical_function=get_unique_users)
-    get_weekly_statistics(course_id, statistical_function=get_click_parqr_new_post)
-    get_weekly_statistics(course_id, statistical_function=get_click_student_recommendations)
-    get_weekly_statistics(course_id, statistical_function=get_click_instructor_dashboard)
+    get_weekly_statistics(course_id, statistical_function=get_num_new_post_clicks)
+    get_weekly_statistics(course_id, statistical_function=get_num_student_recommendation_clicks)
+    get_weekly_statistics(course_id, statistical_function=get_num_instructor_dashboard_clicks)
     get_weekly_statistics(course_id, statistical_function=weekly_posts_prevented)
     get_weekly_statistics(course_id, statistical_function=weekly_posts_by_parqr_users)
 
@@ -442,15 +438,6 @@ def get_weekly_statistics(course_id, statistical_function):
     ------
     weekly_stats : list of dictionary
     """
-    # Sanity check to see if the course_id sent is valid course_id or not
-    is_valid = is_course_id_valid(course_id)
-    if not is_valid:
-        raise InvalidUsage('Invalid course id provided')
-
-    #TODO: Change the hard coding of semester
-    semester = 'fall2018'
-
-    epoch_now = int(time.time())
     def _get_start_of_semester(semester):
         epoch = datetime(1970,1,1)
         if semester == 'fall2018':
@@ -465,21 +452,26 @@ def get_weekly_statistics(course_id, statistical_function):
         weekly_stat_dic = {}
 
         while(start_of_sem < now):
-            key = week_count
-            weekly_stat_dic[key] = start_of_sem
+            weekly_stat_dic[week_count] = start_of_sem
             start_of_sem = start_of_sem + each_week
             week_count = week_count + 1
 
         return weekly_stat_dic
 
+    # Sanity check to see if the course_id sent is valid course_id or not
+    is_valid = is_course_id_valid(course_id)
+    if not is_valid:
+        raise InvalidUsage('Invalid course id provided')
+
+    #TODO: Change the hard coding of semester
+    semester = 'fall2018'
+    epoch_now = int(time.time())
     weekly_stats = _initialize_dictionary(semester, epoch_now)
     last_weekly_stat = 0
-
     keys = sorted([key for key in weekly_stats.keys()])
-
     original = statistical_function(course_id, weekly_stats[keys[0]])
+
     for index in range(0, len(keys) - 1):
-    #for key in sorted(weekly_unique_users.keys()):
         next_week = statistical_function(course_id, weekly_stats[keys[index + 1]])
         weekly_stats[keys[index]] = original - next_week
         original = next_week 
