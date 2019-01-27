@@ -12,6 +12,7 @@ class Followup(db.EmbeddedDocument):
 
 class Post(db.Document):
     course_id = db.StringField(required=True)
+    created = db.DateTimeField(required=True)
     post_id = db.IntField(required=True, unique_with='course_id')
     subject = db.StringField(required=True)
     body = db.StringField(required=True)
@@ -43,11 +44,15 @@ class Post(db.Document):
 
 class Course(db.Document):
     course_id = db.StringField(required=True, unique=True)
+    course_name = db.StringField(required=True)
+    course_number = db.StringField(required=True)
+    course_term = db.StringField(required=True)
     posts = db.ListField(db.ReferenceField(Post, unique=True))
 
 
 class EventData(db.EmbeddedDocument):
     course_id = db.StringField(required=True)
+    post_id = db.IntField()
 
 
 class Event(db.Document):

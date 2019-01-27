@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import logging
 
@@ -6,6 +7,7 @@ from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
 from progressbar import ProgressBar
 
+from app.constants import DATETIME_FORMAT
 from app.models import Course, Post
 from app.utils import read_credentials, stringify_followups
 
@@ -58,8 +60,19 @@ class Parser(object):
         # Get handle to the corresponding course document or create a new one
         course = Course.objects(course_id=course_id)
         if not course:
-            course = Course(course_id).save()
+            enrolled_courses = self._piazza.get_user_classes()
+            for enrolled_course in enrolled_courses:
+                if enrolled_course["nid"] == course_id:
+                    course_name = enrolled_course["name"]
+                    course_number = enrolled_course["num"]
+                    course_term = enrolled_course["term"]
 
+                    course = Course(course_id=course_id,
+                                    course_name=course_name,
+                                    course_number=course_number,
+                                    course_term=course_term).save()
+
+        current_pids = set()
         start_time = time.time()
         for pid in pbar(xrange(1, total_questions + 1)):
             # Get the post if available
@@ -72,6 +85,9 @@ class Parser(object):
             if post['status'] == 'deleted' or post['status'] == 'private':
                 continue
 
+            # If the post is neither deleted nor private, it should be in the db
+            current_pids.add(pid)
+
             # TODO: Parse the type of the post, to indicate if the post is
             # a note/announcement
 
@@ -81,6 +97,8 @@ class Parser(object):
             # Extract number of unique views of the post
             num_views = post['unique_views']
 
+            # Get creation time
+            created = datetime.strptime(post['created'], DATETIME_FORMAT)
             # Extract number of unresolved followups (if any)
             num_unresolved_followups = self._extract_num_unresolved(post)
 
@@ -102,16 +120,29 @@ class Parser(object):
                 is_updated = self._check_for_updates(db_post, new_fields)
 
                 if is_updated is True:
-                    db_post.update(subject=subject, body=body,
+                    db_post.update(subject=subject, created=created, body=body,
+                                   tags=tags,
+                                   post_type=post_type,
                                    s_answer=s_answer, i_answer=i_answer,
                                    followups=followups,
                                    num_unresolved_followups=num_unresolved_followups,
                                    num_views=num_views)
             else:
-                mongo_post = Post(course_id, pid, subject, body, tags,
+                mongo_post = Post(course_id, created, pid, subject, body, tags,
                                   post_type, s_answer, i_answer, followups,
                                   num_views, num_unresolved_followups).save()
                 course.update(add_to_set__posts=mongo_post)
+
+        # Get all the posts for this course in the db
+        db_posts = Post.objects(course_id=course_id).only('post_id')
+        db_pids = set(post.post_id for post in db_posts)
+
+        # Delete pids which are in the db but aren't one of the current pids
+        pids_to_delete = db_pids - current_pids
+        deleted_posts = Post.objects(post_id__in=pids_to_delete).delete()
+
+        if deleted_posts > 0:
+            logger.info("Deleted {} posts while parsing course_id {} ".format(deleted_posts, course_id))
 
         # TODO: Figure out another way to verify whether the current user has
         # access to a class.

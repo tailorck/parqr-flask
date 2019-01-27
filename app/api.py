@@ -9,6 +9,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
 from redis import Redis
 from rq_scheduler import Scheduler
+from flask_cors import CORS, cross_origin
 
 from app import app
 from app.models import Course, Event, EventData, User, Post
@@ -16,7 +17,8 @@ from app.statistics import (
     get_unique_users,
     number_posts_prevented,
     total_posts_in_course,
-    get_top_attention_warranted_posts,
+    get_inst_att_needed_posts,
+    get_stud_att_needed_posts,
     is_course_id_valid
 )
 from app.constants import (
@@ -46,7 +48,7 @@ logger.info('Ready to serve requests')
 
 with open('related_courses.json') as f:
     related_courses = json.load(f)
-
+CORS(app)
 
 @app.errorhandler(404)
 def not_found(error):
@@ -202,12 +204,26 @@ def get_parqr_stats(course_id):
 
 
 @app.route(api_endpoint + 'class/<course_id>/attentionposts', methods=['GET'])
-def get_top_posts(course_id):
+def get_top_inst_posts(course_id):
     try:
         num_posts = int(request.args.get('num_posts'))
-    except ValueError, TypeError:
-        raise InvalidUsage('Invalid number of posts specified', 400)
-    posts = get_top_attention_warranted_posts(course_id, num_posts)
+    except (ValueError, TypeError):
+        raise InvalidUsage('Invalid number of posts specified. Please specify '
+                           'the number of posts you would like as a GET '
+                           'parameter `num_posts`.', 400)
+    posts = get_inst_att_needed_posts(course_id, num_posts)
+    return jsonify({'posts': posts}), 202
+
+
+@app.route(api_endpoint + 'class/<course_id>/student_recs', methods=['GET'])
+def get_top_stud_posts(course_id):
+    try:
+        num_posts = int(request.args.get('num_posts'))
+    except (ValueError, TypeError):
+        raise InvalidUsage('Invalid number of posts specified. Please specify '
+                           'the number of posts you would like as a GET '
+                           'parameter `num_posts`.', 400)
+    posts = get_stud_att_needed_posts(course_id, num_posts)
     return jsonify({'posts': posts}), 202
 
 
@@ -260,3 +276,24 @@ def get_supported_classes():
 @jwt_required()
 def get_enrolled_classes():
     return jsonify(parser.get_enrolled_courses())
+
+
+@app.route(api_endpoint + 'class/parse', methods=['POST'])
+@verify_non_empty_json_request
+@jsonschema.validate('course')
+@jwt_required()
+def post_course_trigger_parse():
+    course_id = request.json['course_id']
+
+    if redis.exists(course_id):
+        logger.info('Triggering parse for course id {}'.format(course_id))
+        successful_parse = parser.update_posts(course_id)
+
+        if successful_parse:
+            return jsonify({'message': 'success'}), 200
+
+        else:
+            return jsonify({'message': 'failure'}), 500
+
+    else:
+        raise InvalidUsage('Course ID does not exists', 400)
