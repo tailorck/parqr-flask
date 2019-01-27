@@ -8,6 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
 from redis import Redis
 from rq_scheduler import Scheduler
+from flask_cors import CORS, cross_origin
 
 from app import app
 from app.models import Course, Event, EventData, User
@@ -44,6 +45,7 @@ auth = HTTPBasicAuth()
 
 logger.info('Ready to serve requests')
 
+CORS(app)
 
 @app.errorhandler(404)
 def not_found(error):
