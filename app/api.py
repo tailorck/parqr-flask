@@ -132,9 +132,11 @@ def instructor_rec():
             continue
 
         recs = parqr.get_recommendations(rel_course_id, query, 5)
+        recs_post_ids = [rec['pid'] for rec in recs.values()]
+        recommended_posts = Post.objects(course_id=rel_course_id,
+                                         post_id__in=recs_post_ids)
 
-        for rec in recs.values():
-            post = Post.objects(course_id=rel_course_id, post_id=rec['pid']).first()
+        for post in recommended_posts:
             if post.i_answer is not None:
                 response[rel_course_id].append({
                     "post_id": post.post_id,
