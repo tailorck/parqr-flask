@@ -3,7 +3,7 @@
     "properties": {
         "course_id" : { "type": "string" },
         "user_id" : { "type": "string" },
-        "time": { "type": "number" },
+        "time": { "type": "string" },
         "query": { "type": "string" },
         "suggested_pids": { 
             "type": "array",

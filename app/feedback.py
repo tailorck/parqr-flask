@@ -1,4 +1,6 @@
-from app.models import Course, Post
+from app.models import Course, Post, FeedbackRecord
+from app.constants import DATETIME_FORMAT
+from datetime import datetime
 
 
 import logging
@@ -68,7 +70,30 @@ class Feedback(object):
         """
 
         # Extract information from dictionary
-        course_id, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
+        course_id, user_id, time, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
+
+        # Get the course
+        course = Course.objects(course_id=course_id)
+
+        # If it doesn't exist, return failure
+        if not course:
+            return False
+
+        # Convert time to datetime object
+        try:
+            time = datetime.strptime(time, DATETIME_FORMAT)
+
+        except ValueError:
+            return False
+
+        # Record the feedback
+        feedback_record = FeedbackRecord(course_id=course_id,
+                                         user_id=user_id,
+                                         time=time,
+                                         query=query,
+                                         suggested_pids=suggested_pids,
+                                         feedback_pid=feedback_pid,
+                                         user_rating=user_rating).save()
 
         return True
 
@@ -91,7 +116,7 @@ class Feedback(object):
         """
 
         # Extract information from dictionary
-        course_id, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
+        course_id, user_id, time, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
 
         # Check that the user rating are within the accepted limits
         if (user_rating < self.min_rating) or (user_rating > self.max_rating):
@@ -110,17 +135,30 @@ class Feedback(object):
             logging.info("Pid was not in suggested")
             return False, "The post id {} is not in the list of suggested posts ids {}.".format(feedback_pid, suggested_pids)
 
+        # Check that all suggested pids actually exist
         for pid in suggested_pids:
             if not Post.objects(course_id=course_id, post_id=pid):
                 return False, "Post id {} does not exist for course {}".format(pid, course_id)
+
+        # Check that the time is in the correct format
+        try:
+            t = datetime.strptime(time, DATETIME_FORMAT)
+
+            if not t:
+                return False, "Incorrect time format."
+
+        except ValueError:
+            return False, "Incorrect time format."
 
         return True, ""
 
     def _unpack_feedback(self, feedback):
         course_id      = feedback["course_id"]
+        user_id        = feedback["user_id"]
+        time           = feedback["time"]
         query          = feedback["query"]
         suggested_pids = feedback["suggested_pids"]
         feedback_pid   = feedback["feedback_pid"]
         user_rating    = feedback["user_rating"]
 
-        return course_id, query, suggested_pids, feedback_pid, user_rating
+        return course_id, user_id, time, query, suggested_pids, feedback_pid, user_rating
