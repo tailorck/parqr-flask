@@ -3,7 +3,6 @@
     "properties": {
         "course_id" : { "type": "string" },
         "user_id" : { "type": "string" },
-        "time": { "type": "string" },
         "query": { "type": "string" },
         "suggested_pids": { 
             "type": "array",
@@ -14,5 +13,5 @@
         "feedback_pid": { "type": "number" },
         "user_rating": { "type": "number" }
     },
-    "required": ["course_id", "user_id", "time", "query", "suggested_pids", "feedback_pid", "user_rating"]
+    "required": ["course_id", "user_id", "query", "suggested_pids", "feedback_pid", "user_rating"]
 }
