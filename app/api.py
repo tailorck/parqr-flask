@@ -11,6 +11,7 @@ from rq_scheduler import Scheduler
 
 from app import app
 from app.models import Course, Event, EventData, User
+from app.modeltrain import ModelTrain
 from app.statistics import (
     get_unique_users,
     number_posts_prevented,
@@ -241,7 +242,7 @@ def get_enrolled_classes():
     return jsonify(parser.get_enrolled_courses())
 
 
-@app.route(api_endpoint + 'class/parse', methods=['POST'])
+@app.route(api_endpoint + 'class/parse_and_train', methods=['POST'])
 @verify_non_empty_json_request
 @jsonschema.validate('course')
 @jwt_required()
@@ -249,10 +250,12 @@ def post_course_trigger_parse():
     course_id = request.json['course_id']
 
     if redis.exists(course_id):
-        logger.info('Triggering parse for course id {}'.format(course_id))
+        logger.info('Triggering parsing and training for course id {}'.format(course_id))
+
         successful_parse = parser.update_posts(course_id)
 
         if successful_parse:
+            ModelTrain().persist_models(course_id)
             return jsonify({'message': 'success'}), 200
 
         else:
