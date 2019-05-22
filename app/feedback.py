@@ -1,4 +1,4 @@
-from app.models import Course, Post, FeedbackRecord
+from app.models import Course, Post, StudentFeedbackRecord
 from app.constants import DATETIME_FORMAT
 from datetime import datetime
 
@@ -77,13 +77,13 @@ class Feedback(object):
             return False
 
         # Record the feedback
-        feedback_record = FeedbackRecord(course_id=course_id,
-                                         user_id=user_id,
-                                         time=time,
-                                         query=query,
-                                         suggested_pids=suggested_pids,
-                                         feedback_pid=feedback_pid,
-                                         user_rating=user_rating).save()
+        feedback_record = StudentFeedbackRecord(course_id=course_id,
+                                                user_id=user_id,
+                                                time=time,
+                                                query=query,
+                                                suggested_pids=suggested_pids,
+                                                feedback_pid=feedback_pid,
+                                                user_rating=user_rating).save()
 
         return True
 

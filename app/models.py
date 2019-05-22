@@ -5,7 +5,7 @@ from passlib.apps import custom_app_context as pwd_context
 db = MongoEngine(app)
 
 
-class FeedbackRecord(db.Document):
+class StudentFeedbackRecord(db.Document):
     course_id = db.StringField(required=True)
     user_id = db.StringField(required=True)
     time = db.DateTimeField(required=True)
@@ -58,7 +58,7 @@ class Course(db.Document):
     course_number = db.StringField(required=True)
     course_term = db.StringField(required=True)
     posts = db.ListField(db.ReferenceField(Post, unique=True))
-    feedback_records = db.ListField(db.ReferenceField(FeedbackRecord, unique=True))
+    feedback_records = db.ListField(db.ReferenceField(StudentFeedbackRecord, unique=True))
 
 
 class EventData(db.EmbeddedDocument):
