@@ -120,9 +120,6 @@ def similar_posts():
     similar_posts = parqr.get_recommendations(course_id, query, 5)
     similar_posts = feedback.request_feedback(similar_posts)
 
-    logger.info("Length: {}".format(len(similar_posts)))
-    logger.info(similar_posts)
-
     return jsonify(similar_posts)
 
 

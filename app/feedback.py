@@ -3,11 +3,7 @@ from app.constants import DATETIME_FORMAT
 from datetime import datetime
 
 
-import logging
 import numpy as np
-
-
-logger = logging.getLogger('app')
 
 
 class Feedback(object):
@@ -33,6 +29,9 @@ class Feedback(object):
         """ Given a set of recommendations, decides whether
             to request feedback from the user or not.
             
+            TODO: Change function to use a strategy
+            rather than pure randomness.
+
             Parameters
             ----------
             similar_posts : dict
@@ -50,8 +49,6 @@ class Feedback(object):
                 similar_posts[score]["feedback"] = True
 
         return similar_posts
-
-
 
 
     def register_feedback(self, feedback):
@@ -125,7 +122,6 @@ class Feedback(object):
 
         # Check that the feedback is for a post that was actually recommended
         if feedback_pid not in suggested_pids:
-            logging.info("Pid was not in suggested")
             return False, "The post id {} is not in the list of suggested posts ids {}.".format(feedback_pid, suggested_pids)
 
         # Check that all suggested pids actually exist
@@ -134,6 +130,7 @@ class Feedback(object):
                 return False, "Post id {} does not exist for course {}".format(pid, course_id)
 
         return True, ""
+
 
     def _unpack_feedback(self, feedback):
         course_id      = feedback["course_id"]
