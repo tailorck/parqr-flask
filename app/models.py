@@ -5,6 +5,16 @@ from passlib.apps import custom_app_context as pwd_context
 db = MongoEngine(app)
 
 
+class FeedbackRecord(db.Document):
+    course_id = db.StringField(required=True)
+    user_id = db.StringField(required=True)
+    time = db.DateTimeField(required=True)
+    query = db.StringField(required=True)
+    suggested_pids = db.ListField(db.IntField(), required=True)
+    feedback_pid = db.IntField(required=True)
+    user_rating = db.IntField(required=True)
+
+
 class Followup(db.EmbeddedDocument):
     text = db.StringField(required=True)
     responses = db.ListField(db.StringField())
@@ -48,6 +58,7 @@ class Course(db.Document):
     course_number = db.StringField(required=True)
     course_term = db.StringField(required=True)
     posts = db.ListField(db.ReferenceField(Post, unique=True))
+    feedback_records = db.ListField(db.ReferenceField(FeedbackRecord, unique=True))
 
 
 class EventData(db.EmbeddedDocument):

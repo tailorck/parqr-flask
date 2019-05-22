@@ -24,17 +24,21 @@ from app.statistics import (
 )
 from app.constants import (
     COURSE_PARSE_TRAIN_TIMEOUT_S,
-    COURSE_PARSE_TRAIN_INTERVAL_S
+    COURSE_PARSE_TRAIN_INTERVAL_S,
+    FEEDBACK_MAX_RATING,
+    FEEDBACK_MIN_RATING
 )
 from app.tasksrq import parse_and_train_models
 from app.exception import InvalidUsage, to_dict
 from app.parser import Parser
 from app.parqr import Parqr
+from app.feedback import Feedback
 
 api_endpoint = '/api/'
 
 parqr = Parqr()
 parser = Parser()
+feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
 jsonschema = JsonSchema(app)
 
 logger = logging.getLogger('app')
@@ -114,6 +118,11 @@ def similar_posts():
 
     query = request.json['query']
     similar_posts = parqr.get_recommendations(course_id, query, 5)
+    similar_posts = feedback.request_feedback(similar_posts)
+
+    logger.info("Length: {}".format(len(similar_posts)))
+    logger.info(similar_posts)
+
     return jsonify(similar_posts)
 
 
@@ -302,3 +311,24 @@ def post_course_trigger_parse():
 
     else:
         raise InvalidUsage('Course ID does not exists', 400)
+
+
+@app.route(api_endpoint + 'feedback', methods=['POST'])
+@verify_non_empty_json_request
+@jsonschema.validate('feedback')
+def post_feedback():
+    # Validate the feedback data
+    feedback_info = request.json
+    valid, message = feedback.validate_feedback(feedback_info)
+
+    # If not falid, return invalid usage
+    if not valid:
+        raise InvalidUsage("Feedback contains invalid data. " + message, 400)
+
+    success = feedback.register_feedback(request.json)
+
+    if success:
+        return jsonify({'message': 'success'}), 200
+
+    else:
+        return jsonify({'message': 'failure'}), 500
