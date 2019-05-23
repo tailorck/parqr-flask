@@ -45,8 +45,9 @@ class Feedback(object):
         """
 
         if np.random.random_sample() < 0.1:
-            for score in similar_posts.keys():
-                similar_posts[score]["feedback"] = True
+            for key in similar_posts.keys():
+                if key != "id":
+                    similar_posts[key]['feedback'] = True
 
         return similar_posts
 
