@@ -1,7 +1,7 @@
-from app.models import Course, Post, StudentFeedbackRecord
+from app.models import Course, Post, StudentFeedbackRecord, QueryRecommendationPair
 from app.constants import DATETIME_FORMAT
 from datetime import datetime
-
+from bson.objectid import ObjectId
 
 import numpy as np
 
@@ -67,7 +67,7 @@ class Feedback(object):
         """
 
         # Extract information from dictionary
-        course_id, user_id, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
+        course_id, user_id, query_rec_id, feedback_pid, user_rating = self._unpack_feedback(feedback)
         time = datetime.now()
 
         # Get the course
@@ -77,12 +77,18 @@ class Feedback(object):
         if not course:
             return False
 
+        # Get the query-recommendation pair
+        query_rec_pair = QueryRecommendationPair.objects.with_id(query_rec_id)
+
+        # If it doesn't exist, return failure
+        if not query_rec_pair:
+            return False
+
         # Record the feedback
         feedback_record = StudentFeedbackRecord(course_id=course_id,
                                                 user_id=user_id,
                                                 time=time,
-                                                query=query,
-                                                suggested_pids=suggested_pids,
+                                                query_rec_pair=query_rec_pair,
                                                 feedback_pid=feedback_pid,
                                                 user_rating=user_rating).save()
 
@@ -107,13 +113,25 @@ class Feedback(object):
         """
 
         # Extract information from dictionary
-        course_id, user_id, query, suggested_pids, feedback_pid, user_rating = self._unpack_feedback(feedback)
+        course_id, user_id, query_rec_id, feedback_pid, user_rating = self._unpack_feedback(feedback)
 
         # Check that the user rating are within the accepted limits
         if (user_rating < self.min_rating) or (user_rating > self.max_rating):
             return False, "Rating must be between {} and {}.".format(self.min_rating, self.max_rating)
 
+        # Check that the query-recommendation id is valid
+        if not ObjectId.is_valid(query_rec_id):
+            return False, "The query-recommendation id {} is not valid.".format(query_rec_id)
+
+        # Check that the query-recommendation pair exists
+        query_rec_pair = QueryRecommendationPair.objects.with_id(query_rec_id)
+
+        if not query_rec_pair:
+            return False, "The query-recommendation id {} does not exist.".format(query_rec_id)
+
         # Check that the query string isn't empty
+        query = query_rec_pair.query
+
         if not query:
             return False, "Invalid query string."
 
@@ -122,11 +140,13 @@ class Feedback(object):
             return False, "Course {} is currently not supported.".format(course_id)
 
         # Check that the feedback is for a post that was actually recommended
-        if feedback_pid not in suggested_pids:
-            return False, "The post id {} is not in the list of suggested posts ids {}.".format(feedback_pid, suggested_pids)
+        recommended_pids = query_rec_pair.recommended_pids
+
+        if feedback_pid not in recommended_pids:
+            return False, "The post id {} is not in the list of suggested posts ids {}.".format(feedback_pid, recommended_pids)
 
         # Check that all suggested pids actually exist
-        for pid in suggested_pids:
+        for pid in recommended_pids:
             if not Post.objects(course_id=course_id, post_id=pid):
                 return False, "Post id {} does not exist for course {}".format(pid, course_id)
 
@@ -136,9 +156,8 @@ class Feedback(object):
     def _unpack_feedback(self, feedback):
         course_id      = feedback["course_id"]
         user_id        = feedback["user_id"]
-        query          = feedback["query"]
-        suggested_pids = feedback["suggested_pids"]
+        query_rec_id   = feedback["query_recommendation_id"]
         feedback_pid   = feedback["feedback_pid"]
         user_rating    = feedback["user_rating"]
 
-        return course_id, user_id, query, suggested_pids, feedback_pid, user_rating
+        return course_id, user_id, query_rec_id, feedback_pid, user_rating

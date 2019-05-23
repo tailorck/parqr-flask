@@ -9,15 +9,14 @@ class QueryRecommendationPair(db.Document):
     course_id = db.StringField(required=True)
     time = db.DateTimeField(required=True)
     query = db.StringField(required=True)
-    suggested_pids = db.ListField(db.IntField())
+    recommended_pids = db.ListField(db.IntField())
 
 
 class StudentFeedbackRecord(db.Document):
     course_id = db.StringField(required=True)
     user_id = db.StringField(required=True)
     time = db.DateTimeField(required=True)
-    query = db.StringField(required=True)
-    suggested_pids = db.ListField(db.IntField(), required=True)
+    query_rec_pair = db.ReferenceField(QueryRecommendationPair, required=True)
     feedback_pid = db.IntField(required=True)
     user_rating = db.IntField(required=True)
 

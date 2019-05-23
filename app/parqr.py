@@ -108,11 +108,11 @@ class Parqr(object):
                                     'feedback' : False}
 
         course = Course.objects(course_id=cid)
-        suggested_pids = [top_posts[score]["pid"] for score in sorted(top_posts.keys())]
+        recommended_pids = [top_posts[score]["pid"] for score in sorted(top_posts.keys())]
         mongo_query_rec_pair = QueryRecommendationPair(course_id=cid,
                                                        time=datetime.now(),
                                                        query=query,
-                                                       suggested_pids=suggested_pids).save()
+                                                       recommended_pids=recommended_pids).save()
         course.update(add_to_set__query_recs_pairs=mongo_query_rec_pair)
         top_posts["id"] = str(mongo_query_rec_pair.id)
 
