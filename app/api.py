@@ -85,6 +85,10 @@ def index():
 @verify_non_empty_json_request
 @jsonschema.validate('event')
 def register_event():
+    '''
+    Define event
+    :return:
+    '''
     millis_since_epoch = request.json['time'] / 1000.0
 
     event = Event()
@@ -105,6 +109,10 @@ def register_event():
 @verify_non_empty_json_request
 @jsonschema.validate('query')
 def similar_posts():
+    '''
+    Given course_id and query, retrieve 5 similar posts
+    :return:
+    '''
     course_id = request.json['course_id']
     if not Course.objects(course_id=course_id):
         logger.error('New un-registered course found: {}'.format(course_id))
@@ -120,6 +128,12 @@ def similar_posts():
 @verify_non_empty_json_request
 @jsonschema.validate('query')
 def instructor_rec():
+    '''
+    Given course_id and query, get related course_ids, get 5 similar posts.
+
+
+    :return:
+    '''
     course_id = request.json['course_id']
     if not Course.objects(course_id=course_id) or course_id not in related_courses:
         logger.error('New un-registered course found: {}'.format(course_id))
@@ -156,6 +170,11 @@ def instructor_rec():
 @jsonschema.validate('class')
 @jwt_required()
 def register_class():
+    '''
+    insturctor registers the class
+
+    :return:
+    '''
     cid = request.json['course_id']
     if not redis.exists(cid):
         logger.info('Registering new course: {}'.format(cid))
@@ -178,6 +197,11 @@ def register_class():
 @jsonschema.validate('class')
 @jwt_required()
 def deregister_class():
+    '''
+    Deregister the class
+
+    :return:
+    '''
     cid = request.json['course_id']
     if redis.exists(cid):
         logger.info('Deregistering course: {}'.format(cid))
@@ -191,6 +215,12 @@ def deregister_class():
 
 @app.route(api_endpoint + 'class/<course_id>/usage', methods=['GET'])
 def get_parqr_stats(course_id):
+    '''
+    Get num of unique users, num of post prevented, percent of Traffic reduced
+
+    :param course_id:
+    :return:
+    '''
     try:
         start_time = int(request.args.get('start_time'))
     except ValueError, TypeError:
@@ -207,6 +237,20 @@ def get_parqr_stats(course_id):
 
 @app.route(api_endpoint + 'class/<course_id>/attentionposts', methods=['GET'])
 def get_top_inst_posts(course_id):
+    '''
+    For given course_id and number of posts to get, retrieve posts from starting time to now
+
+    Retrieves the top instructor attention needed posts, for a specific
+    course, with the search time being [starting_time, now). The following are
+    the factors used in determining if a post warrants attention or not:
+
+    1) There is no Instructor answer for it
+    2) There is no student answer for it
+    3) There are unanswered followup questions for the post
+
+    :param course_id:
+    :return:
+    '''
     try:
         num_posts = int(request.args.get('num_posts'))
     except (ValueError, TypeError):
@@ -285,6 +329,11 @@ def get_enrolled_classes():
 @jsonschema.validate('course')
 @jwt_required()
 def post_course_trigger_parse():
+    '''
+    For a given course, update the course model.
+
+    :return:
+    '''
     course_id = request.json['course_id']
 
     if redis.exists(course_id):

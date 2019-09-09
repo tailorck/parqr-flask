@@ -5,6 +5,7 @@ import os
 from flask import Flask
 import rq_dashboard
 from Crypto.PublicKey import RSA
+from app import errors
 
 from ..config import config_dict
 
@@ -30,6 +31,15 @@ def create_app(config_name):
     # queues on the web.
     app.config.from_object(rq_dashboard.default_settings)
     app.register_blueprint(rq_dashboard.blueprint, url_prefix='/rq')
+
+    '''
+    Import and register the blueprint from the factory using app.register_blueprint(). 
+    Place the new code at the end of the factory function before returning the app.
+    
+    The error blueprint will have views to (functionality of app)
+    '''
+
+    #app.register_blueprint(errors.bp)
 
     # Override some parameters of rq_dashboard config with app.config
     app.config.from_object(config_dict[config_name])
