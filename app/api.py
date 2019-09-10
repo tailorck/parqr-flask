@@ -3,7 +3,7 @@ from collections import namedtuple, defaultdict
 import logging
 import json
 
-from flask import jsonify, make_response, request
+from flask import jsonify, make_response, request, current_app
 from flask_jsonschema import JsonSchema, ValidationError
 from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
@@ -12,6 +12,7 @@ from rq_scheduler import Scheduler
 from flask_cors import CORS, cross_origin
 
 from app import app
+
 from app.models import Course, Event, EventData, User, Post
 from app.statistics import (
     get_unique_users,
@@ -50,19 +51,19 @@ with open('related_courses.json') as f:
     related_courses = json.load(f)
 CORS(app)
 
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'endpoint not found'}), 404)
-
-
-@app.errorhandler(InvalidUsage)
-def on_invalid_usage(error):
-    return make_response(jsonify(to_dict(error)), error.status_code)
-
-
-@app.errorhandler(ValidationError)
-def on_validation_error(error):
-    return make_response(jsonify(to_dict(error)), 400)
+# @app.errorhandler(404)
+# def not_found(error):
+#     return make_response(jsonify({'error': 'endpoint not found'}), 404)
+#
+#
+# @app.errorhandler(InvalidUsage)
+# def on_invalid_usage(error):
+#     return make_response(jsonify(to_dict(error)), error.status_code)
+#
+#
+# @app.errorhandler(ValidationError)
+# def on_validation_error(error):
+#     return make_response(jsonify(to_dict(error)), 400)
 
 
 def verify_non_empty_json_request(func):
