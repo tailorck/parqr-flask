@@ -4,7 +4,7 @@ import logging
 import json
 
 from flask import jsonify, make_response, request, current_app
-from flask_jsonschema import JsonSchema, ValidationError
+from flask_jsonschema import JsonSchema, ValidationError, validate
 from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
 from redis import Redis
@@ -84,7 +84,7 @@ def index():
 
 @app.route(api_endpoint + 'event', methods=['POST'])
 @verify_non_empty_json_request
-@jsonschema.validate('event')
+@validate('event')
 def register_event():
     '''
     Define event
@@ -108,7 +108,7 @@ def register_event():
 
 @app.route(api_endpoint + 'similar_posts', methods=['POST'])
 @verify_non_empty_json_request
-@jsonschema.validate('query')
+@validate('query')
 def similar_posts():
     '''
     Given course_id and query, retrieve 5 similar posts
@@ -127,7 +127,7 @@ def similar_posts():
 
 @app.route(api_endpoint + 'answer_recommendations', methods=['POST'])
 @verify_non_empty_json_request
-@jsonschema.validate('query')
+@validate('query')
 def instructor_rec():
     '''
     Given course_id and query, get related course_ids, get 5 similar posts.
@@ -167,9 +167,10 @@ def instructor_rec():
 
 # TODO: Add additional attributes (i.e. professor, classes etc.)
 @app.route(api_endpoint + 'class', methods=['POST'])
-@verify_non_empty_json_request
-@jsonschema.validate('class')
 @jwt_required()
+
+@verify_non_empty_json_request
+@validate('class')
 def register_class():
     '''
     insturctor registers the class
@@ -194,9 +195,9 @@ def register_class():
 
 
 @app.route(api_endpoint + 'class', methods=['DELETE'])
-@verify_non_empty_json_request
-@jsonschema.validate('class')
 @jwt_required()
+@verify_non_empty_json_request
+@validate('class')
 def deregister_class():
     '''
     Deregister the class
@@ -283,7 +284,7 @@ def get_course_isvalid():
 
 @app.route('/api/users', methods=['POST'])
 @verify_non_empty_json_request
-@jsonschema.validate('user')
+@validate('user')
 def new_user():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -327,7 +328,7 @@ def get_enrolled_classes():
 
 @app.route(api_endpoint + 'class/parse', methods=['POST'])
 @verify_non_empty_json_request
-@jsonschema.validate('course')
+@validate('course')
 @jwt_required()
 def post_course_trigger_parse():
     '''

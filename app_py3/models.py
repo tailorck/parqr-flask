@@ -32,14 +32,14 @@ class Post(db.Document):
             return string
 
         attrs = []
-        print '<{}: id={!r}>'.format(type(self).__name__, self.id)
+        print('<{}: id={!r}>'.format(type(self).__name__, self.id))
         fields = ['course_id', 'post_id', 'subject', 'body', 'tags',
                   's_answer', 'i_answer', 'followups']
         for name in fields:
             value = getattr(self, name)
-            if isinstance(value, unicode):
+            if isinstance(value, str):
                 value = _format_long_string(value)
-            print '    {} = {}'.format(name, value)
+            print('    {} = {}'.format(name, value))
 
 
 class Course(db.Document):

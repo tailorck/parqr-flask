@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:2.7
 ADD requirements.txt /app/requirements.txt
 ADD related_courses.json /parqr/related_courses.json
 RUN pip install -r /app/requirements.txt

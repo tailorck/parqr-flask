@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 
 from models import Post
-from utils import clean, ModelCache
-from constants import (
+from app_py3.common.utils import clean, ModelCache
+from app_py3.constants import (
     TFIDF_MODELS,
     SCORE_THRESHOLD,
     COURSE_MODEL_RELOAD_DELAY_S
 )
 
-logger = logging.getLogger('app')
+logging = logging.getlogging('app')
 
 
 class ModelInfo(object):
@@ -139,7 +139,7 @@ class Parqr(object):
         if cid not in self._course_dict:
             self._load_all_models(cid)
         elif now - self._course_dict[cid].last_load > delay:
-            logger.info('Reloading models for cid: {}'.format(cid))
+            logging.info('Reloading models for cid: {}'.format(cid))
             self._load_all_models(cid)
 
         course_info = self._course_dict[cid]
@@ -187,7 +187,7 @@ class Parqr(object):
         Args:
             cid (str): The course id of interest
         """
-        logger.info("Loading all models for cid: {}".format(cid))
+        logging.info("Loading all models for cid: {}".format(cid))
 
         if cid in self._course_dict:
             course_info = self._course_dict[cid]

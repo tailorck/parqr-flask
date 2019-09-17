@@ -15,6 +15,7 @@ from app_py3 import app
 from app_py3.parser import Parser
 from app_py3.parqr import Parqr
 from flask_httpauth import HTTPBasicAuth
+from app_py3.models import User
 
 def verify(username, password):
     Identity = namedtuple('Identity', ['id'])
@@ -34,13 +35,13 @@ jwt = JWT(app, verify, identity)
 parqr = Parqr()
 parser = Parser()
 jsonschema = JsonSchema(app)
-logger = logging.getLogger('app')
+logging = logging.getlogging('app')
 redis_host = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']
 redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
 auth = HTTPBasicAuth()
-logger.info('Ready to serve requests')
+logging.info('Ready to serve requests')
 
 with open('related_courses.json') as f:
     related_courses = json.load(f)

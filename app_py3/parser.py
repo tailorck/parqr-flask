@@ -1,4 +1,6 @@
 from datetime import datetime
+from collections import namedtuple, defaultdict
+import json
 import time
 import logging
 
@@ -7,11 +9,11 @@ from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
 from progressbar import ProgressBar
 
-from app.constants import DATETIME_FORMAT
-from app.models import Course, Post
-from app.utils import read_credentials, stringify_followups
+from app_py3.constants import DATETIME_FORMAT
+from app_py3.models import Course, Post
+from app_py3.common import read_credentials, stringify_followups
 
-logger = logging.getLogger('app')
+logging = logging.getlogging('app')
 
 
 class Parser(object):
@@ -45,7 +47,7 @@ class Parser(object):
         success : boolean
             True if course parsed without any errors. False, otherwise.
         """
-        logger.info("Parsing posts for course: {}".format(course_id))
+        logging.info("Parsing posts for course: {}".format(course_id))
         network = self._piazza.network(course_id)
         stats = network.get_statistics()
 
@@ -53,7 +55,7 @@ class Parser(object):
             total_questions = stats['total']['questions']
             pbar = ProgressBar(maxval=total_questions)
         except KeyError:
-            logger.error('Unable to get valid statistics for course_id: {}'
+            logging.error('Unable to get valid statistics for course_id: {}'
                          .format(course_id))
             return False
 
@@ -74,7 +76,7 @@ class Parser(object):
 
         current_pids = set()
         start_time = time.time()
-        for pid in pbar(xrange(1, total_questions + 1)):
+        for pid in pbar(range(1, total_questions + 1)):
             # Get the post if available
             try:
                 post = network.get_post(pid)
@@ -141,14 +143,14 @@ class Parser(object):
         deleted_posts = Post.objects(post_id__in=pids_to_delete).delete()
 
         if deleted_posts > 0:
-            logger.info("Deleted {} posts while parsing course_id {} ".format(deleted_posts, course_id))
+            logging.info("Deleted {} posts while parsing course_id {} ".format(deleted_posts, course_id))
 
         # TODO: Figure out another way to verify whether the current user has
         # access to a class.
         # In the event the course_id was invalid or no posts were parsed,
         # delete course object
         if Post.objects(course_id=course_id).count() == 0:
-            logger.error('Unable to parse posts for course: {}. Please '
+            logging.error('Unable to parse posts for course: {}. Please '
                          'confirm that the piazza user has access to this '
                          'course'.format(course_id))
             Course.objects(course_id=course_id).delete()
@@ -156,7 +158,7 @@ class Parser(object):
 
         end_time = time.time()
         time_elapsed = end_time - start_time
-        logger.info('Course updated. {} posts scraped in: '
+        logging.info('Course updated. {} posts scraped in: '
                     '{:.2f}s'.format(total_questions, time_elapsed))
 
         return True
@@ -297,12 +299,11 @@ class Parser(object):
             email, password = read_credentials()
             self._piazza.user_login(email, password)
         except IOError:
-            logger.error("File not found. Use encrypt_login.py to "
+            logging.error("File not found. Use encrypt_login.py to "
                          "create encrypted password store")
             self._login_with_input()
-        except UnicodeDecodeError, AuthenticationError:
-            logger.error("Incorrect Email/Password found in "
-                         "encrypted file store")
+        except (UnicodeDecodeError, AuthenticationError) as e:
+            logging.error("Incorrect Email/Password found in encrypted file store")
             self._login_with_input()
 
     def _login_with_input(self):
@@ -312,5 +313,5 @@ class Parser(object):
                 self._piazza.user_login()
                 break
             except AuthenticationError:
-                logger.error('Invalid Username/Password')
+                logging.error('Invalid Username/Password')
                 continue
