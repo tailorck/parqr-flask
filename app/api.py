@@ -26,7 +26,7 @@ from app.models import User
 from app.exception import InvalidUsage, to_dict
 from app.parser import Parser
 from app.parqr import Parqr
-from app.extensions import db, jwt, redis, parqr, redis_host, scheduler
+from app.extensions import jwt, redis, parqr, redis_host, scheduler
 from app import app
 
 

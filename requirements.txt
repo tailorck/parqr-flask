@@ -8,6 +8,7 @@ Flask==0.12.2
 flask-json-schema
 flask_httpauth==3.2.4
 flask-jwt==0.3.2
+flask_restful
 flask_mongoengine==0.9.3
 gunicorn==19.7.1
 mock==2.0.0

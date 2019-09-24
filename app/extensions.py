@@ -2,12 +2,11 @@
 All extensions here are used as singletons and
 initialized in application factory
 """
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt import JWT, jwt_required
-from flask_jsonschema import JsonSchema, JsonValidationError
+from flask_jwt import JWT
+from flask_json_schema import JsonSchema
 from redis import Redis
 from rq_scheduler import Scheduler
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import json
 from collections import namedtuple
 import logging
@@ -30,7 +29,6 @@ def identity(payload):
     return User.objects(pk=user_id).first()
 
 
-db = SQLAlchemy()
 jwt = JWT(app, verify, identity)
 parqr = Parqr()
 parser = Parser()
