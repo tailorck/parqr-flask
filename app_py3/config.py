@@ -5,7 +5,6 @@ from os.path import dirname, abspath, join
 file_dir = dirname(abspath(__file__))
 '''
 Configuration File
-
 '''
 
 

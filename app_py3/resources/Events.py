@@ -1,28 +1,31 @@
 from flask_restful import Resource
 from app import app
 from flask import request, jsonify
+from flask_jsonschema import JsonSchema, ValidationError, validate
+
 from datetime import datetime
 from flask_mongoengine import MongoEngine
+from app_py3.models import EventData
+import logging
 from passlib.apps import custom_app_context as pwd_context
-
-db = MongoEngine(app)
+from app_py3.common import verify_non_empty_json_request
+from app_py3.models import Course, Event, EventData, User, Post
 
 class Event(Resource):
     #decorator
-    decorators = [auth.login_required]
+    decorators = [validate('event'), verify_non_empty_json_request]
 
     def __init__(self):
-        self.event_type = db.StringField(required=True)
-        self.event_name = db.StringField(required=True)
-        self.time = db.DateTimeField(required=True)
-        self.user_id = db.StringField(required=True)
-        self.event_data = db.EmbeddedDocumentField(EventData, default=EventData,
-                                              required=True)
+        pass
 
     def get(self):
         pass
 
     def post(self):
+        '''
+        Register Event
+        :return:
+        '''
         millis_since_epoch = request.json['time'] / 1000.0
 
         event = Event()
@@ -33,7 +36,7 @@ class Event(Resource):
         event.event_data = EventData(**request.json['eventData'])
 
         event.save()
-        logger.info('Recorded {} event from cid {}'
+        logging.info('Recorded {} event from cid {}'
                     .format(event.event_name, event.event_data.course_id))
 
         return {'message': 'success'}, 200
