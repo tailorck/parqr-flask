@@ -3,7 +3,6 @@ def to_dict(exception):
         rv = dict(exception.payload)
     else:
         rv = dict()
-
     rv['message'] = exception.message
     return rv
 
