@@ -5,7 +5,7 @@ import logging
 import json
 
 from flask import jsonify, make_response, request, current_app, Blueprint
-from flask_jsonschema import JsonSchema, ValidationError, validate
+from flask_jsonschema import JsonSchema, JsonValidationError, validate
 from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
 from redis import Redis
@@ -51,7 +51,7 @@ def on_invalid_usage(error):
     return make_response(jsonify(to_dict(error)), error.status_code)
 
 
-@app.errorhandler(ValidationError)
+@app.errorhandler(JsonValidationError)
 def on_validation_error(error):
     return make_response(jsonify(to_dict(error)), 400)
 

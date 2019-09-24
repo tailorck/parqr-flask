@@ -3,7 +3,7 @@ from collections import defaultdict
 from flask_restful import Resource
 from app import app
 from flask import request, jsonify
-from flask_jsonschema import JsonSchema, ValidationError, validate
+from flask_jsonschema import JsonSchema, JsonValidationError, validate
 
 from datetime import datetime
 from flask_mongoengine import MongoEngine

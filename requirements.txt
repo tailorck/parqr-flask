@@ -1,11 +1,11 @@
-six==1.10.0
+six==1.11.0
 Flask==0.12.2
 Flask_JsonSchema==0.1.1
 flask-cors==3.0.7
 bs4==0.0.1
 enum34==1.1.6
 Flask==0.12.2
-Flask_JsonSchema==0.1.1
+flask-json-schema
 flask_httpauth==3.2.4
 flask-jwt==0.3.2
 flask_mongoengine==0.9.3
@@ -18,7 +18,7 @@ passlib==1.7.1
 pbr==3.1.1
 pep8==1.7.0
 piazza-api==0.11.0
-progressbar==2.3
+progressbar==2.5
 pycrypto==2.6.1
 pytest==3.3.2
 pytest-cov==2.5.1

@@ -4,7 +4,7 @@ initialized in application factory
 """
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required
-from flask_jsonschema import JsonSchema, ValidationError
+from flask_jsonschema import JsonSchema, JsonValidationError
 from redis import Redis
 from rq_scheduler import Scheduler
 from flask_cors import CORS, cross_origin
