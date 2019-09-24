@@ -3,7 +3,7 @@ from collections import namedtuple, defaultdict
 import logging
 import json
 
-from flask import jsonify, make_response, request, current_app
+from flask import jsonify, make_response, request
 from flask_jsonschema import JsonSchema, ValidationError
 from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT, jwt_required
@@ -51,19 +51,19 @@ with open('related_courses.json') as f:
     related_courses = json.load(f)
 CORS(app)
 
-# @app.errorhandler(404)
-# def not_found(error):
-#     return make_response(jsonify({'error': 'endpoint not found'}), 404)
-#
-#
-# @app.errorhandler(InvalidUsage)
-# def on_invalid_usage(error):
-#     return make_response(jsonify(to_dict(error)), error.status_code)
-#
-#
-# @app.errorhandler(ValidationError)
-# def on_validation_error(error):
-#     return make_response(jsonify(to_dict(error)), 400)
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'endpoint not found'}), 404)
+
+
+@app.errorhandler(InvalidUsage)
+def on_invalid_usage(error):
+    return make_response(jsonify(to_dict(error)), error.status_code)
+
+
+@app.errorhandler(ValidationError)
+def on_validation_error(error):
+    return make_response(jsonify(to_dict(error)), 400)
 
 
 def verify_non_empty_json_request(func):
@@ -224,7 +224,7 @@ def get_parqr_stats(course_id):
     '''
     try:
         start_time = int(request.args.get('start_time'))
-    except ValueError, TypeError:
+    except (ValueError, TypeError) as e:
         raise InvalidUsage('Invalid start time specified', 400)
     num_active_uid = get_unique_users(course_id, start_time)
     num_post_prevented, posts_by_parqr_users = number_posts_prevented(course_id, start_time)
@@ -254,7 +254,7 @@ def get_top_inst_posts(course_id):
     '''
     try:
         num_posts = int(request.args.get('num_posts'))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
         raise InvalidUsage('Invalid number of posts specified. Please specify '
                            'the number of posts you would like as a GET '
                            'parameter `num_posts`.', 400)

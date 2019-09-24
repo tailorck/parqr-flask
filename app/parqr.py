@@ -5,9 +5,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 
-from models import Post
-from utils import clean, ModelCache
-from constants import (
+from app.models import Post
+from app.utils import clean, ModelCache
+from app.constants import (
     TFIDF_MODELS,
     SCORE_THRESHOLD,
     COURSE_MODEL_RELOAD_DELAY_S

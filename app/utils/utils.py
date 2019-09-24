@@ -4,7 +4,6 @@ import os
 
 from flask import Flask
 import rq_dashboard
-from Crypto.PublicKey import RSA
 
 from ..config import config_dict
 
@@ -40,11 +39,11 @@ def create_app(config_name):
     
     The error blueprint will have views to (functionality of app)
     '''
-    from app.errors import bp as errors_bp
-    app.register_blueprint(errors_bp)
-
-    from app.auth import bp as auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    # from app.errors import bp as errors_bp
+    # app.register_blueprint(errors_bp)
+    #
+    # from app.auth import bp as auth_bp
+    # app.register_blueprint(auth_bp, url_prefix='/auth')
 
     # Override some parameters of rq_dashboard config with app.config
     app.config.from_object(config_dict[config_name])
@@ -69,11 +68,4 @@ def create_app(config_name):
 
 def read_credentials():
     """Method to read encrypted .login file for Piazza username and password"""
-    with open('.key.pem') as f:
-        key = RSA.importKey(f.read())
-
-    with open('.login') as f:
-        email_bytes = f.read(128)
-        password_bytes = f.read(128)
-
-    return key.decrypt(email_bytes), key.decrypt(password_bytes)
+    return 'parqrdevteam@gmail.com', 'parqrproducers'

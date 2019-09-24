@@ -300,7 +300,7 @@ class Parser(object):
             logger.error("File not found. Use encrypt_login.py to "
                          "create encrypted password store")
             self._login_with_input()
-        except UnicodeDecodeError, AuthenticationError:
+        except (UnicodeDecodeError, AuthenticationError) as e:
             logger.error("Incorrect Email/Password found in "
                          "encrypted file store")
             self._login_with_input()
