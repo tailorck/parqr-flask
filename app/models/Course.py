@@ -1,5 +1,5 @@
 from app.db import db
-from app.models import Post
+from app.models.Post import Post
 
 
 class Course(db.Document):

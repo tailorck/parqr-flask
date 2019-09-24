@@ -1,5 +1,5 @@
 from app.db import db
-from app.models import EventData
+from app.models.EventData import EventData
 
 class Event(db.Document):
     event_type = db.StringField(required=True)
