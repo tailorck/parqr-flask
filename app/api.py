@@ -1,15 +1,7 @@
 from collections import namedtuple
-import logging
-import json
-
 from flask import jsonify, make_response, request
 from flask_json_schema import JsonSchema, JsonValidationError
-
-from flask_httpauth import HTTPBasicAuth
 from flask_jwt import JWT
-from redis import Redis
-from rq_scheduler import Scheduler
-from flask_cors import CORS
 from flask_restful import Api
 from app.resources.Course import Course
 from app.resources.Course_Enrolled import Course_Enrolled
@@ -31,25 +23,6 @@ from app import app
 
 
 api_endpoint = '/api/2.0'
-
-# parqr = Parqr()
-# parser = Parser()
-# schema = JsonSchema(app)
-#
-# logger = logging.getLogger('app')
-#
-# redis_host = app.config['REDIS_HOST']
-# redis_port = app.config['REDIS_PORT']
-# redis = Redis(host=redis_host, port=redis_port, db=0)
-# scheduler = Scheduler(connection=redis)
-# auth = HTTPBasicAuth()
-#
-# logger.info('Ready to serve requests')
-#
-# with open('related_courses.json') as f:
-#     related_courses = json.load(f)
-# CORS(app)
-
 api = Api(app)
 api.add_resource(Course, api_endpoint + '/course/<string:course_id>')
 api.add_resource(Course_Enrolled, api_endpoint + '/courses_enrolled')
@@ -61,27 +34,7 @@ api.add_resource(Parse, api_endpoint + '/parse')
 api.add_resource(Query, api_endpoint + '/similar_posts')
 api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
 api.add_resource(Users, api_endpoint + '/users')
-###########################################################################
-def verify(username, password):
-    Identity = namedtuple('Identity', ['id'])
-    user = User.objects(username=username).first()
-    if not user or not user.verify_password(password):
-        return False
-    return Identity(str(user.pk))
 
-
-def identity(payload):
-    user_id = payload['identity']
-    return User.objects(pk=user_id).first()
-
-
-jwt = JWT(app, verify, identity)
-
-
-
-
-
-###########################################################################
 
 @app.errorhandler(404)
 def not_found(error):

@@ -16,6 +16,7 @@ from app.parqr import Parqr
 from flask_httpauth import HTTPBasicAuth
 from app.models.User import User
 
+
 def verify(username, password):
     Identity = namedtuple('Identity', ['id'])
     user = User.objects(username=username).first()
@@ -40,7 +41,6 @@ redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
 auth = HTTPBasicAuth()
 logging.info('Ready to serve requests')
-
 
 
 with open('related_courses.json') as f:
