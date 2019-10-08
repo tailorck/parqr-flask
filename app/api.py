@@ -26,19 +26,23 @@ from app.statistics import (
 )
 from app.constants import (
     COURSE_PARSE_TRAIN_TIMEOUT_S,
-    COURSE_PARSE_TRAIN_INTERVAL_S
+    COURSE_PARSE_TRAIN_INTERVAL_S,
+    FEEDBACK_MAX_RATING,
+    FEEDBACK_MIN_RATING
 )
 from app.tasksrq import parse_and_train_models
 from app.exception import InvalidUsage, to_dict
 from app.parser import Parser
 from app.parqr import Parqr
+from app.feedback import Feedback
+
 
 api_endpoint = '/api/'
 
 parqr = Parqr()
 parser = Parser()
 schema = JsonSchema(app)
-
+feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
 logger = logging.getLogger('app')
 
 redis_host = app.config['REDIS_HOST']
@@ -124,6 +128,7 @@ def similar_posts():
 
     query = request.json['query']
     similar_posts = parqr.get_recommendations(course_id, query, 5)
+    similar_posts = feedback.request_feedback(similar_posts)
     return jsonify(similar_posts)
 
 
@@ -351,3 +356,24 @@ def post_course_trigger_parse():
 
     else:
         raise InvalidUsage('Course ID does not exists', 400)
+
+
+@app.route(api_endpoint + 'feedback', methods=['POST'])
+# @verify_non_empty_json_request
+@schema.validate('feedback')
+def post_feedback():
+    # Validate the feedback data
+    course_id, user_id, query_rec_id, feedback_pid, user_rating = Feedback.unpack_feedback(request.json)
+    valid, message = feedback.validate_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating)
+
+    # If not failed, return invalid usage
+    if not valid:
+        raise InvalidUsage("Feedback contains invalid data. " + message, 400)
+
+    success = Feedback.register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating)
+
+    if success:
+        return jsonify({'message': 'success'}), 200
+
+    else:
+        return jsonify({'message': 'failure'}), 500
