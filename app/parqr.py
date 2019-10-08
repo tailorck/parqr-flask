@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 
-from app.models import Post
+from app.models import Post, Course, QueryRecommendationPair
 from app.utils import clean, ModelCache
 from app.constants import (
     TFIDF_MODELS,
@@ -104,11 +104,22 @@ class Parqr(object):
                 top_posts[score] = {'pid': pid,
                                     'subject': subject,
                                     's_answer': s_answer,
-                                    'i_answer': i_answer}
+                                    'i_answer': i_answer,
+                                    'feedback': False}
+
+        course = Course.objects(course_id=cid)
+        recommended_pids = [top_posts[score]["pid"] for score in sorted(top_posts.keys())]
+        mongo_query_rec_pair = QueryRecommendationPair(course_id=cid,
+                                                       time=datetime.now(),
+                                                       query=query,
+                                                       recommended_pids=recommended_pids).save()
+        course.update(add_to_set__query_recs_pairs=mongo_query_rec_pair)
+        top_posts["id"] = str(mongo_query_rec_pair.id)
 
         return top_posts
 
-    def _get_tfidf_recommendations(self, cid, query, N):
+
+def _get_tfidf_recommendations(self, cid, query, N):
         """Scores the query for all the models in a given course.
 
         This function iterates over all the models for a given course,
