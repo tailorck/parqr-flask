@@ -74,7 +74,7 @@ class Parser(object):
 
         current_pids = set()
         start_time = time.time()
-        for pid in pbar(xrange(1, total_questions + 1)):
+        for pid in pbar(range(1, total_questions + 1)):
             # Get the post if available
             try:
                 post = network.get_post(pid)
