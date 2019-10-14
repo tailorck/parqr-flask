@@ -1,0 +1,83 @@
+from flask_restful import Resource
+from flask_jwt import jwt_required
+from datetime import timedelta
+from flask import request, jsonify
+from app.tasksrq import parse_and_train_models
+import redis
+from datetime import datetime
+from app.constants import (
+    COURSE_PARSE_TRAIN_TIMEOUT_S,
+    COURSE_PARSE_TRAIN_INTERVAL_S
+)
+from app.statistics import (
+    get_unique_users,
+    number_posts_prevented,
+    total_posts_in_course
+)
+import logging
+from app.exception import InvalidUsage
+from app.extensions import scheduler, logger, schema
+
+
+class Course(Resource):
+
+    def get(self, course_id):
+        '''
+        Get num of unique users, num of post prevented, percent of Traffic reduced
+        get_parqr_stats
+        :param course_id:
+        :return:
+        '''
+        try:
+            start_time = int(request.args.get('start_time'))
+        except (ValueError, TypeError) as e:
+            raise InvalidUsage('Invalid start time specified', 400)
+        num_active_uid = get_unique_users(course_id, start_time)
+        num_post_prevented, posts_by_parqr_users = number_posts_prevented(course_id, start_time)
+        num_total_posts = total_posts_in_course(course_id)
+        num_all_post = float(posts_by_parqr_users + num_post_prevented)
+        percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
+        return jsonify({'usingParqr': num_active_uid,
+                        'assistedCount': num_post_prevented,
+                        'percentTrafficReduced': percent_traffic_reduced}), 202
+
+    @schema.validate('class')
+    @jwt_required()
+    def post(self):
+        '''
+        insturctor registers the class
+        :return:
+        '''
+        cid = request.json['course_id']
+        if not redis.exists(cid):
+            logging.info('Registering new course: {}'.format(cid))
+            curr_time = datetime.now()
+            delayed_time = curr_time + timedelta(minutes=5)
+
+            new_course_job = scheduler.schedule(scheduled_time=datetime.now(),
+                                                func=parse_and_train_models,
+                                                kwargs={"course_id": cid},
+                                                interval=COURSE_PARSE_TRAIN_INTERVAL_S,
+                                                timeout=COURSE_PARSE_TRAIN_TIMEOUT_S)
+            redis.set(cid, new_course_job.id)
+            return jsonify({'course_id': cid}), 202
+        else:
+            raise InvalidUsage('Course ID already exists', 400)
+
+    @schema.validate('class')
+    @jwt_required()
+    def delete(self):
+        cid = request.json['course_id']
+        if redis.exists(cid):
+            logger.info('Deregistering course: {}'.format(cid))
+            job_id_str = redis.get(cid)
+            scheduler.cancel(job_id_str)
+            redis.delete(cid)
+            return jsonify({'course_id': cid}), 200
+        else:
+            raise InvalidUsage('Course ID does not exists', 400)
+
+    # @jwt_required()
+    # def put(self, name):
+
+
