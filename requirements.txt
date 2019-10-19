@@ -9,7 +9,6 @@ flask-jwt==0.3.2
 flask_mongoengine==0.9.3
 gunicorn
 mock==2.0.0
-nltk
 numpy==1.15.0
 pandas==0.22.0
 passlib==1.7.1
