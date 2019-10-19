@@ -11,7 +11,7 @@ from app.constants import TFIDF_MODELS
 from app.models import Post, Course
 from app.exception import InvalidUsage
 from app.utils import (
-    clean_and_split,
+    spacy_clean,
     stringify_followups,
     ModelCache
 )
@@ -48,7 +48,7 @@ def stem_lem_tokenizer(doc):
         List of stemmed and lemmatized words from doc
     """
     return [stemmer.stem(lemmatizer.lemmatize(w))
-            for w in clean_and_split(doc)]
+            for w in spacy_clean(doc)]
 
 
 class ModelTrain(object):
@@ -133,18 +133,18 @@ class ModelTrain(object):
 
         for post in Post.objects(course_id=cid):
             if model_name == TFIDF_MODELS.POST:
-                clean_subject = clean_and_split(post.subject)
-                clean_body = clean_and_split(post.body)
+                clean_subject = spacy_clean(post.subject)
+                clean_body = spacy_clean(post.body)
                 tags = post.tags
                 words.append(' '.join(clean_subject + clean_body + tags))
                 model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.I_ANSWER:
                 if post.i_answer:
-                    words.append(' '.join(clean_and_split(post.i_answer)))
+                    words.append(' '.join(spacy_clean(post.i_answer)))
                     model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.S_ANSWER:
                 if post.s_answer:
-                    words.append(' '.join(clean_and_split(post.s_answer)))
+                    words.append(' '.join(spacy_clean(post.s_answer)))
                     model_pid_list.append(post.post_id)
             elif model_name == TFIDF_MODELS.FOLLOWUP:
                 if post.followups:
