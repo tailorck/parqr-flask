@@ -149,7 +149,7 @@ class ModelTrain(object):
             elif model_name == TFIDF_MODELS.FOLLOWUP:
                 if post.followups:
                     followup_str = stringify_followups(post.followups)
-                    words.append(' '.join(clean_and_split(followup_str)))
+                    words.append(' '.join(spacy_clean(followup_str)))
                     model_pid_list.append(post.post_id)
 
         return np.array(words), np.array(model_pid_list)

@@ -4,7 +4,7 @@ import spacy
 logger = logging.getLogger('app')
 
 
-def spacy_clean(text):
+def spacy_clean(text, array=True):
     '''
     Cleans a string of text by:
         1. Removing all punctuations
@@ -24,7 +24,8 @@ def spacy_clean(text):
     nlp = spacy.load("en_core_web_sm")
     #creating a doc object by applying model to the text
     doc = nlp(text)
-    return [token.lemma_ for token in doc if token.pos_ not in {"PUNCT", "PART", "PRON"}]
+    res = [token.lemma_ for token in doc if token.pos_ not in {"PUNCT", "PART", "PRON"}]
+    return res if array else "".join(res)
 
 
 def stringify_followups(followup_list):

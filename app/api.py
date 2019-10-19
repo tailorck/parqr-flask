@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from collections import namedtuple, defaultdict
 import logging
 import json
+import os
 
 from flask import jsonify, make_response, request
 # from flask_jsonschema import JsonSchema, JsonValidationError
@@ -36,12 +37,12 @@ from app.parser import Parser
 from app.parqr import Parqr
 from app.feedback import Feedback
 
-
 api_endpoint = '/api/'
 
 parqr = Parqr()
 parser = Parser()
 schema = JsonSchema(app)
+
 feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
 logger = logging.getLogger('app')
 
@@ -57,6 +58,87 @@ with open('related_courses.json') as f:
     related_courses = json.load(f)
 CORS(app)
 
+user = {
+    "type": "object",
+    "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+    },
+    "required": ["username", "password"]
+}
+
+course = {
+    "type": "object",
+    "properties": {
+        "course_id": { "type": "string" }
+    },
+    "required": ["course_id"]
+}
+
+event = {
+    "type": "object",
+    "properties": {
+        "type": { "type": "string" },
+        "eventName": { "type": "string" },
+        "time": { "type": "number" },
+        "user_id": { "type": "string" },
+        "eventData": {
+            "type": "object",
+            "properties": {
+                "course_id": { "type": "string" }
+            },
+            "required": ["course_id"]
+        }
+    },
+    "required": ["type", "eventName", "time", "user_id", "eventData"]
+}
+
+
+query = {
+    "type": "object",
+    "properties": {
+        "query": { "type": "string" },
+        "course_id": { "type": "string" }
+    },
+    "required": ["query", "course_id"]
+}
+
+train_model = {
+    "type": "object",
+    "properties": {
+        "course_id": { "type": "string" }
+    },
+    "required": ["course_id"]
+}
+
+feedback_schema = {
+    "type": "object",
+    "properties": {
+        "course_id" : { "type": "string" },
+        "user_id" : { "type": "string" },
+        "query_recommendation_id" : {"type": "string"},
+        "feedback_pid": { "type": "number" },
+        "user_rating": { "type": "number" }
+    },
+    "required": ["course_id", "user_id", "query_recommendation_id", "feedback_pid", "user_rating"]
+}
+
+def verify(username, password):
+    print(username)
+    Identity = namedtuple('Identity', ['id'])
+    user = User.objects(username=username).first()
+    if not user or not user.verify_password(password):
+        return False
+    return Identity(str(user.pk))
+
+
+def identity(payload):
+    user_id = payload['identity']
+    return User.objects(pk=user_id).first()
+
+
+jwt = JWT(app, verify, identity)
+
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'endpoint not found'}), 404)
@@ -69,7 +151,10 @@ def on_invalid_usage(error):
 
 @app.errorhandler(JsonValidationError)
 def on_validation_error(error):
-    return make_response(jsonify(to_dict(error)), 400)
+    # return make_response(jsonify(to_dict(error)), 400)
+    return jsonify({'error': error.message,
+                    'errors': [validation_error.message for validation_error
+                               in error.errors]})
 
 
 def verify_non_empty_json_request(func):
@@ -82,7 +167,6 @@ def verify_non_empty_json_request(func):
     wrapper.func_name = func.__name__
     return wrapper
 
-
 @app.route('/')
 def index():
     return "Hello, World!"
@@ -90,7 +174,7 @@ def index():
 
 @app.route(api_endpoint + 'event', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('event')
+@schema.validate(event)
 def register_event():
     '''
     Define event
@@ -114,7 +198,7 @@ def register_event():
 
 @app.route(api_endpoint + 'similar_posts', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('query')
+@schema.validate(query)
 def similar_posts():
     '''
     Given course_id and query, retrieve 5 similar posts
@@ -134,7 +218,7 @@ def similar_posts():
 
 @app.route(api_endpoint + 'answer_recommendations', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('query')
+@schema.validate(query)
 def instructor_rec():
     '''
     Given course_id and query, get related course_ids, get 5 similar posts.
@@ -175,8 +259,8 @@ def instructor_rec():
 # TODO: Add additional attributes (i.e. professor, classes etc.)
 @app.route(api_endpoint + 'class', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('class')
-@jwt_required()
+@schema.validate(course)
+# @jwt_required()
 def register_class():
     '''
     insturctor registers the class
@@ -184,6 +268,7 @@ def register_class():
     :return:
     '''
     cid = request.json['course_id']
+    print(cid)
     if not redis.exists(cid):
         logger.info('Registering new course: {}'.format(cid))
         curr_time = datetime.now()
@@ -202,7 +287,7 @@ def register_class():
 
 @app.route(api_endpoint + 'class', methods=['DELETE'])
 # @verify_non_empty_json_request
-@schema.validate('class')
+@schema.validate(course)
 @jwt_required()
 def deregister_class():
     '''
@@ -211,6 +296,7 @@ def deregister_class():
     :return:
     '''
     cid = request.json['course_id']
+
     if redis.exists(cid):
         logger.info('Deregistering course: {}'.format(cid))
         job_id_str = redis.get(cid)
@@ -290,7 +376,7 @@ def get_course_isvalid():
 
 @app.route('/api/users', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('user')
+@schema.validate(user)
 def new_user():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -302,22 +388,6 @@ def new_user():
     user.hash_password(password)
     user.save()
     return jsonify({'username': user.username}), 201
-
-
-def verify(username, password):
-    Identity = namedtuple('Identity', ['id'])
-    user = User.objects(username=username).first()
-    if not user or not user.verify_password(password):
-        return False
-    return Identity(str(user.pk))
-
-
-def identity(payload):
-    user_id = payload['identity']
-    return User.objects(pk=user_id).first()
-
-
-jwt = JWT(app, verify, identity)
 
 
 @app.route('/api/class', methods=['GET'])
@@ -334,7 +404,7 @@ def get_enrolled_classes():
 
 @app.route(api_endpoint + 'class/parse', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('course')
+@schema.validate(course)
 @jwt_required()
 def post_course_trigger_parse():
     '''
@@ -360,7 +430,7 @@ def post_course_trigger_parse():
 
 @app.route(api_endpoint + 'feedback', methods=['POST'])
 # @verify_non_empty_json_request
-@schema.validate('feedback')
+@schema.validate(feedback_schema)
 def post_feedback():
     # Validate the feedback data
     course_id, user_id, query_rec_id, feedback_pid, user_rating = Feedback.unpack_feedback(request.json)
