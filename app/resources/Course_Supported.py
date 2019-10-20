@@ -6,7 +6,7 @@ from flask_jwt import jwt_required
 
 class Course_Supported(Resource):
 
-    @jwt_required()
+    # @jwt_required()
     def get(self):
-        return jsonify(Course.objects.values_list('course_id'))
+        return Course.objects.values_list('course_id')
 

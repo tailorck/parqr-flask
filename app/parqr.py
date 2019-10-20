@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from app.models import Post, Course, QueryRecommendationPair
-from app.utils import clean, ModelCache
+from app.utils import spacy_clean, ModelCache
 from app.constants import (
     TFIDF_MODELS,
     SCORE_THRESHOLD,
@@ -80,7 +80,7 @@ class Parqr(object):
             scores as the keys
         """
         # clean query vector
-        clean_query = clean(query)
+        clean_query = spacy_clean(query, array=False)
 
         # Retrive the scores for each model in the course as a pandas DataFrame
         tfidf_scores = self._get_tfidf_recommendations(cid, clean_query, N)
@@ -118,8 +118,7 @@ class Parqr(object):
 
         return top_posts
 
-
-def _get_tfidf_recommendations(self, cid, query, N):
+    def _get_tfidf_recommendations(self, cid, query, N):
         """Scores the query for all the models in a given course.
 
         This function iterates over all the models for a given course,

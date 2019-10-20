@@ -3,7 +3,7 @@ from flask import jsonify, make_response, request
 from flask_json_schema import JsonSchema, JsonValidationError
 from flask_jwt import JWT
 from flask_restful import Api
-from app.resources.Course import Course
+from app.resources.Course import Course, Course_Stat
 from app.resources.Course_Enrolled import Course_Enrolled
 from app.resources.Course_Supported import Course_Supported
 from app.resources.Course_Validator import Course_Validator
@@ -26,7 +26,8 @@ from app import app
 
 api_endpoint = '/api/2.0'
 api = Api(app)
-api.add_resource(Course, api_endpoint + '/course/<string:course_id>')
+api.add_resource(Course, api_endpoint + '/course')
+api.add_resource(Course_Stat, api_endpoint + '/course/<string:course_id>')
 api.add_resource(Course_Enrolled, api_endpoint + '/courses_enrolled')
 api.add_resource(Course_Supported, api_endpoint + '/courses_supported')
 api.add_resource(Course_Validator, api_endpoint + '/isvalid')
@@ -37,7 +38,6 @@ api.add_resource(Query, api_endpoint + '/similar_posts')
 api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
 api.add_resource(Users, api_endpoint + '/users')
 api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
-
 
 
 @app.errorhandler(404)

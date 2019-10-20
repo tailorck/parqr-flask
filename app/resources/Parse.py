@@ -4,12 +4,13 @@ from flask import request, jsonify
 import redis
 from app.exception import InvalidUsage
 from app.extensions import parser, logger, schema
+from app.resources import course
 
 
 class Parse(Resource):
 
-    @schema.validate('course')
-    @jwt_required()
+    # @schema.validate(course)
+    # @jwt_required()
     def post(self):
         '''
         Given course_id and query, retrieve 5 similar posts
@@ -21,10 +22,10 @@ class Parse(Resource):
             successful_parse = parser.update_posts(course_id)
 
             if successful_parse:
-                return jsonify({'message': 'success'}), 200
+                return {'message': 'success'}, 200
 
             else:
-                return jsonify({'message': 'failure'}), 500
+                return {'message': 'failure'}, 500
 
         else:
-            raise InvalidUsage('Course ID does not exists', 400)
+            return {'message': 'Course ID does not exists'}, 400

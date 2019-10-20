@@ -1,9 +1,12 @@
 from flask_restful import Resource
 from collections import defaultdict
 from flask import request, jsonify
-from app.models import Course, Post
+from app.models.Course import Course
+from app.models.Post import Post
 from app.exception import InvalidUsage
 from app.extensions import logger, schema, parqr
+from app.resources import query
+
 import json
 
 with open('related_courses.json') as f:
@@ -12,13 +15,13 @@ with open('related_courses.json') as f:
 
 class Instructor_Query(Resource):
 
-    @schema.validate('query')
+    # @schema.validate(query)
     def post(self):
         course_id = request.json['course_id']
         if not Course.objects(course_id=course_id) or course_id not in related_courses:
             logger.error('New un-registered course found: {}'.format(course_id))
-            raise InvalidUsage("Course with course id {} not supported at this "
-                               "time.".format(course_id), 400)
+            return {'message': "Course with course id {} not supported at this "
+                               "time.".format(course_id)}, 400
 
         query = request.json['query']
 
@@ -41,4 +44,4 @@ class Instructor_Query(Resource):
                         "instructor_answer": post.i_answer
                     })
 
-        return jsonify(response)
+        return response

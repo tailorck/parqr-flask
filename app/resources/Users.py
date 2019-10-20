@@ -3,19 +3,19 @@ from flask import request, jsonify
 from app.exception import InvalidUsage
 from app.extensions import schema
 from app.models.User import User
-
+from app.resources import user
 
 class Users(Resource):
 
-    @schema.validate('user')
+    # @schema.validate(user)
     def post(self):
         username = request.json.get('username')
         password = request.json.get('password')
 
         if User.objects(username=username).first() is not None:
-            raise InvalidUsage('Username already enrolled', 400)
+            return {'message': 'Username already enrolled'}, 400
 
         user = User(username=username)
         user.hash_password(password)
         user.save()
-        return jsonify({'username': user.username}), 201
+        return {'username': user.username}, 201

@@ -6,6 +6,6 @@ from app.extensions import parser
 
 class Course_Enrolled(Resource):
 
-    @jwt_required()
+    # @jwt_required()
     def get(self):
-        return jsonify(parser.get_enrolled_courses())
+        return parser.get_enrolled_courses()

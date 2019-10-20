@@ -12,7 +12,6 @@ flask_restful
 flask_mongoengine==0.9.3
 gunicorn==19.7.1
 mock==2.0.0
-nltk==3.3
 numpy==1.17.2
 pandas==0.25.1
 passlib==1.7.1
@@ -21,8 +20,8 @@ pep8==1.7.0
 piazza-api
 progressbar
 pycrypto==2.6.1
-pytest==3.3.2
-pytest-cov==2.5.1
+pytest
+pytest-cov
 redis==2.10.6
 rq==0.10.0
 rq_dashboard==0.3.10

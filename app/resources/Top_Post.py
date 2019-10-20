@@ -13,13 +13,14 @@ class Top_Post(Resource):
         try:
             num_posts = int(request.args.get('num_posts'))
         except (ValueError, TypeError) as e:
-            raise InvalidUsage('Invalid number of posts specified. Please specify '
-                               'the number of posts you would like as a GET '
-                               'parameter `num_posts`.', 400)
+            return {'message': 'Invalid number of posts specified. '
+                               'Please specify the number of posts you would like '
+                               'as a GET parameter num_posts'}, 400
+
         posts = None
         if user == 'instructor':
             posts = get_inst_att_needed_posts(course_id, num_posts)
         elif user == 'student':
             posts = get_stud_att_needed_posts(course_id, num_posts)
-        return jsonify({'posts': posts}), 202
+        return {'posts': posts}, 202
 

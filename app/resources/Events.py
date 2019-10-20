@@ -1,13 +1,15 @@
 from flask_restful import Resource
-from app.models import Event, EventData
+from app.models.Event import Event
+from app.models.EventData import EventData
 from flask import request, jsonify
 from datetime import datetime
 from app.extensions import logger, schema
 
+from app.resources import event
 
 class Events(Resource):
 
-    @schema.validate('event')
+    # @schema.validate(event)
     def post(self):
         millis_since_epoch = request.json['time'] / 1000.0
         event = Event()
@@ -21,5 +23,5 @@ class Events(Resource):
         logger.info('Recorded {} event from cid {}'
                     .format(event.event_name, event.event_data.course_id))
 
-        return jsonify({'message': 'success'}), 200
+        return {'message': 'success'}, 200
 

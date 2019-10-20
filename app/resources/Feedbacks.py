@@ -3,11 +3,12 @@ from flask import request, jsonify
 from app.exception import InvalidUsage
 from app.extensions import feedback, schema
 from app.feedback import Feedback
+from app.resources import feedback_schema
 
 
 class Feedbacks(Resource):
 
-    @schema.validate('feedback')
+    # @schema.validate(feedback_schema)
     def post(self):
         # Validate the feedback data
         course_id, user_id, query_rec_id, feedback_pid, user_rating = Feedback.unpack_feedback(request.json)
@@ -15,12 +16,11 @@ class Feedbacks(Resource):
 
         # If not failed, return invalid usage
         if not valid:
-            raise InvalidUsage("Feedback contains invalid data. " + message, 400)
-
+            return {'message': "Feedback contains invalid data." + message}, 400
         success = Feedback.register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating)
 
         if success:
-            return jsonify({'message': 'success'}), 200
+            return {'message': 'success'}, 200
 
         else:
-            return jsonify({'message': 'failure'}), 500
+            return {'message': 'failure'}, 500

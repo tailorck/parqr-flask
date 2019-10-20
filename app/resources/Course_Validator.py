@@ -8,5 +8,5 @@ class Course_Validator(Resource):
     def get(self):
         course_id = request.args.get('course_id')
         is_valid = is_course_id_valid(course_id)
-        return jsonify({'valid': is_valid}), 202
+        return {'valid': is_valid}, 202
 
