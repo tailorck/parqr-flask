@@ -164,7 +164,7 @@ def verify_non_empty_json_request(func):
         if not request.json:
             raise InvalidUsage('Request body must be in JSON format', 400)
         return func(*args, **kwargs)
-    wrapper.func_name = func.__name__
+    wrapper.func_name = func.func_name
     return wrapper
 
 @app.route('/')
