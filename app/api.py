@@ -2,10 +2,8 @@ from datetime import datetime, timedelta
 from collections import namedtuple, defaultdict
 import logging
 import json
-import os
 
 from flask import jsonify, make_response, request
-# from flask_jsonschema import JsonSchema, JsonValidationError
 from flask_json_schema import JsonSchema, JsonValidationError
 
 from flask_httpauth import HTTPBasicAuth
@@ -31,6 +29,8 @@ from app.constants import (
     FEEDBACK_MAX_RATING,
     FEEDBACK_MIN_RATING
 )
+from app.schemas.schemas import user, course, event, query, train_model, feedback_schema
+
 from app.tasksrq import parse_and_train_models
 from app.exception import InvalidUsage, to_dict
 from app.parser import Parser
@@ -58,70 +58,7 @@ with open('related_courses.json') as f:
     related_courses = json.load(f)
 CORS(app)
 
-user = {
-    "type": "object",
-    "properties": {
-        "username": { "type": "string" },
-        "password": { "type": "string" }
-    },
-    "required": ["username", "password"]
-}
 
-course = {
-    "type": "object",
-    "properties": {
-        "course_id": { "type": "string" }
-    },
-    "required": ["course_id"]
-}
-
-event = {
-    "type": "object",
-    "properties": {
-        "type": { "type": "string" },
-        "eventName": { "type": "string" },
-        "time": { "type": "number" },
-        "user_id": { "type": "string" },
-        "eventData": {
-            "type": "object",
-            "properties": {
-                "course_id": { "type": "string" }
-            },
-            "required": ["course_id"]
-        }
-    },
-    "required": ["type", "eventName", "time", "user_id", "eventData"]
-}
-
-
-query = {
-    "type": "object",
-    "properties": {
-        "query": { "type": "string" },
-        "course_id": { "type": "string" }
-    },
-    "required": ["query", "course_id"]
-}
-
-train_model = {
-    "type": "object",
-    "properties": {
-        "course_id": { "type": "string" }
-    },
-    "required": ["course_id"]
-}
-
-feedback_schema = {
-    "type": "object",
-    "properties": {
-        "course_id" : { "type": "string" },
-        "user_id" : { "type": "string" },
-        "query_recommendation_id" : {"type": "string"},
-        "feedback_pid": { "type": "number" },
-        "user_rating": { "type": "number" }
-    },
-    "required": ["course_id", "user_id", "query_recommendation_id", "feedback_pid", "user_rating"]
-}
 
 def verify(username, password):
     print(username)
@@ -213,7 +150,10 @@ def similar_posts():
 
     query = request.json['query']
     similar_posts = parqr.get_recommendations(course_id, query, 5)
-    similar_posts = feedback.request_feedback(similar_posts)
+    if feedback.requires_feedback():
+        query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
+        similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
+
     return jsonify(similar_posts)
 
 

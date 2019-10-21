@@ -22,29 +22,31 @@ class Feedback(object):
         self.min_rating = min_rating
         self.feedback_probability = feedback_probability
 
-    def request_feedback(self, similar_posts):
+    def requires_feedback(self):
         """ Given a set of recommendations, decides whether
             to request feedback from the user or not.
 
-            TODO: Change function to use a strategy
-            rather than pure randomness.
-            Parameters
-            ----------
-            similar_posts : dict
-                A dictionary with the posts suggested by PARQR.
             Returns
             -------
             similar_posts : dict
                 The same dictionary, but with a boolean flag added for each
                 post. The flag is true if feedback should be requested.
         """
+        return np.random.random_sample() < self.feedback_probability
 
-        if np.random.random_sample() < self.feedback_probability:
-            for key in similar_posts.keys():
-                if key != "id":
-                    similar_posts[key]['feedback'] = True
-
+    def update_recommendations(self, query_rec_id, similar_posts):
+        for key in similar_posts:
+            similar_posts[key]['feedback'] = True
+        similar_posts['query_rec_id'] = query_rec_id
         return similar_posts
+
+    def save_query_rec_pair(self, cid, query, similar_posts):
+        recommended_pids = [similar_posts[score]["pid"] for score in similar_posts.keys()]
+        mongo_query_rec_pair = QueryRecommendationPair(course_id=cid,
+                                                       time=datetime.now(),
+                                                       query=query,
+                                                       recommended_pids=recommended_pids).save()
+        return mongo_query_rec_pair
 
     def validate_feedback(self, course_id, user_id, query_rec_id, feedback_pid, user_rating):
         """ Performs a sanity check on the feedback.

@@ -13,10 +13,11 @@ body, and tags of a new post.
 4. Inside the repo, store your Piazza credentials in an encrypted file with `python encrypt_login.py`.
 5. (Step 4) Actually, ask Chirag for specific Piazza email and pw. The function read_credentials doesn't work. 
 6. Spin up the docker containers with `docker-compose up --build -d`. The first time will take a few minutes to download the mongo and redis images.
-7. Verify you have 4 containers running (a list of the images will be better)
+7. Verify you have 5 containers running (a list of the images will be better)
 8. create /data/db
 9. add /data/db in Docker's Preferences' File Sharing
 10. If everything went according to plan, `curl localhost` should return `Hello, World!`.
+11. In Postman, enable PARQR environment. 
 
 #### Debugging
 
