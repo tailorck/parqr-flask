@@ -4,10 +4,12 @@ from app.exception import InvalidUsage
 from app.extensions import feedback, schema
 from app.feedback import Feedback
 from app.resources import feedback_schema
+from app.api import verify_non_empty_json_request
 
 
 class Feedbacks(Resource):
 
+    @verify_non_empty_json_request
     # @schema.validate(feedback_schema)
     def post(self):
         # Validate the feedback data

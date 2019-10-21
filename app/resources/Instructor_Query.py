@@ -6,6 +6,7 @@ from app.models.Post import Post
 from app.exception import InvalidUsage
 from app.extensions import logger, schema, parqr
 from app.resources import query
+from app.api import verify_non_empty_json_request
 
 import json
 
@@ -15,6 +16,7 @@ with open('related_courses.json') as f:
 
 class Instructor_Query(Resource):
 
+    @verify_non_empty_json_request
     # @schema.validate(query)
     def post(self):
         course_id = request.json['course_id']

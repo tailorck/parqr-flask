@@ -4,11 +4,11 @@ from app.models.EventData import EventData
 from flask import request, jsonify
 from datetime import datetime
 from app.extensions import logger, schema
-
-from app.resources import event
+from app.api import verify_non_empty_json_request
 
 class Events(Resource):
 
+    @verify_non_empty_json_request
     # @schema.validate(event)
     def post(self):
         millis_since_epoch = request.json['time'] / 1000.0

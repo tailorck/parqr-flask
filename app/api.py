@@ -1,7 +1,5 @@
-from collections import namedtuple
 from flask import jsonify, make_response, request
-from flask_json_schema import JsonSchema, JsonValidationError
-from flask_jwt import JWT
+from flask_json_schema import JsonValidationError
 from flask_restful import Api
 from app.resources.Course import Course, Course_Stat
 from app.resources.Course_Enrolled import Course_Enrolled
@@ -16,11 +14,7 @@ from app.resources.Users import Users
 from app.resources.Feedbacks import Feedbacks
 
 
-from app.models import User
 from app.exception import InvalidUsage, to_dict
-from app.parser import Parser
-from app.parqr import Parqr
-from app.extensions import jwt, redis, parqr, redis_host, scheduler
 from app import app
 
 
@@ -62,7 +56,7 @@ def verify_non_empty_json_request(func):
         if not request.json:
             raise InvalidUsage('Request body must be in JSON format', 400)
         return func(*args, **kwargs)
-    wrapper.func_name = func.__name__
+    wrapper.__name__ = func.__name__
     return wrapper
 
 

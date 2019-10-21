@@ -14,14 +14,15 @@ from app.statistics import (
     total_posts_in_course
 )
 import logging
-from app.exception import InvalidUsage
 from app.extensions import scheduler, logger, schema, redis
-from app.resources import course
+from app.api import verify_non_empty_json_request
 
 
 class Course(Resource):
+
+    @verify_non_empty_json_request
     # @schema.validate(course)
-    # @jwt_required()
+    @jwt_required()
     def post(self):
         '''
         insturctor registers the class
@@ -45,7 +46,8 @@ class Course(Resource):
             return {'message': 'Course ID already exists'}, 400
 
     # @schema.validate(course)
-    # @jwt_required()
+    @verify_non_empty_json_request
+    @jwt_required()
     def delete(self):
         cid = request.json['course_id']
         if redis.exists(cid):
@@ -58,12 +60,10 @@ class Course(Resource):
             # raise InvalidUsage('Course ID does not exists', 400)
             return {'message': 'Course ID does not exists'}, 400
 
-    # @jwt_required()
-    # def put(self, name):
-
 
 class Course_Stat(Resource):
-    # @jwt_required()
+
+    @jwt_required()
     def get(self, course_id):
         '''
         Get num of unique users, num of post prevented, percent of Traffic reduced

@@ -4,9 +4,12 @@ from app.exception import InvalidUsage
 from app.extensions import schema
 from app.models.User import User
 from app.resources import user
+from app.api import verify_non_empty_json_request
+
 
 class Users(Resource):
 
+    @verify_non_empty_json_request
     # @schema.validate(user)
     def post(self):
         username = request.json.get('username')

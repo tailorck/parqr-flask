@@ -3,12 +3,13 @@ from app.models.Course import Course
 from flask import request, jsonify
 from app.exception import InvalidUsage
 from app.extensions import feedback, parqr, logger, schema
-from app.resources import query
+from app.api import verify_non_empty_json_request
 
 
 class Query(Resource):
 
     # @schema.validate(query)
+    @verify_non_empty_json_request
     def post(self):
         '''
         Given course_id and query, retrieve 5 similar posts
@@ -22,6 +23,8 @@ class Query(Resource):
 
         query = request.json['query']
         similar_posts = parqr.get_recommendations(course_id, query, 5)
-        similar_posts = feedback.request_feedback(similar_posts)
+        if feedback.requires_feedback():
+            query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
+            similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
 
         return similar_posts
