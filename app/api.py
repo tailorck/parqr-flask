@@ -164,8 +164,9 @@ def verify_non_empty_json_request(func):
         if not request.json:
             raise InvalidUsage('Request body must be in JSON format', 400)
         return func(*args, **kwargs)
-    wrapper.func_name = func.func_name
+    wrapper.__name__ = func.__name__
     return wrapper
+
 
 @app.route('/')
 def index():
@@ -173,7 +174,7 @@ def index():
 
 
 @app.route(api_endpoint + 'event', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(event)
 def register_event():
     '''
@@ -197,7 +198,7 @@ def register_event():
 
 
 @app.route(api_endpoint + 'similar_posts', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(query)
 def similar_posts():
     '''
@@ -217,7 +218,7 @@ def similar_posts():
 
 
 @app.route(api_endpoint + 'answer_recommendations', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(query)
 def instructor_rec():
     '''
@@ -258,7 +259,7 @@ def instructor_rec():
 
 # TODO: Add additional attributes (i.e. professor, classes etc.)
 @app.route(api_endpoint + 'class', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(course)
 # @jwt_required()
 def register_class():
@@ -286,7 +287,7 @@ def register_class():
 
 
 @app.route(api_endpoint + 'class', methods=['DELETE'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(course)
 @jwt_required()
 def deregister_class():
@@ -375,7 +376,7 @@ def get_course_isvalid():
 
 
 @app.route('/api/users', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(user)
 def new_user():
     username = request.json.get('username')
@@ -403,7 +404,7 @@ def get_enrolled_classes():
 
 
 @app.route(api_endpoint + 'class/parse', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(course)
 @jwt_required()
 def post_course_trigger_parse():
@@ -429,7 +430,7 @@ def post_course_trigger_parse():
 
 
 @app.route(api_endpoint + 'feedback', methods=['POST'])
-# @verify_non_empty_json_request
+@verify_non_empty_json_request
 @schema.validate(feedback_schema)
 def post_feedback():
     # Validate the feedback data
