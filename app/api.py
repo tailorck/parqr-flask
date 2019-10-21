@@ -261,7 +261,7 @@ def instructor_rec():
 @app.route(api_endpoint + 'class', methods=['POST'])
 @verify_non_empty_json_request
 @schema.validate(course)
-# @jwt_required()
+@jwt_required()
 def register_class():
     '''
     insturctor registers the class
@@ -269,7 +269,6 @@ def register_class():
     :return:
     '''
     cid = request.json['course_id']
-    print(cid)
     if not redis.exists(cid):
         logger.info('Registering new course: {}'.format(cid))
         curr_time = datetime.now()
