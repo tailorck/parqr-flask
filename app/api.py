@@ -29,7 +29,13 @@ from app.constants import (
     FEEDBACK_MAX_RATING,
     FEEDBACK_MIN_RATING
 )
-from app.schemas.schemas import user, course, event, query, train_model, feedback_schema
+from app.schemas import (
+    user,
+    course,
+    event,
+    query,
+    train_model,
+    feedback_schema)
 
 from app.tasksrq import parse_and_train_models
 from app.exception import InvalidUsage, to_dict
