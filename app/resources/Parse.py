@@ -3,12 +3,12 @@ from flask_jwt import jwt_required
 from flask import request, jsonify
 from app.exception import InvalidUsage
 from app.extensions import parser, logger, schema, redis
-from app.api import verify_non_empty_json_request
-
+from app.exception import verify_non_empty_json_request
+from app.schemas import course
 
 class Parse(Resource):
 
-    # @schema.validate(course)
+    @schema.validate(course)
     @verify_non_empty_json_request
     @jwt_required()
     def post(self):

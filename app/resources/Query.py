@@ -3,12 +3,13 @@ from app.models.Course import Course
 from flask import request, jsonify
 from app.exception import InvalidUsage
 from app.extensions import feedback, parqr, logger, schema
-from app.api import verify_non_empty_json_request
+from app.exception import verify_non_empty_json_request
+from app.schemas import query
 
 
 class Query(Resource):
 
-    # @schema.validate(query)
+    @schema.validate(query)
     @verify_non_empty_json_request
     def post(self):
         '''

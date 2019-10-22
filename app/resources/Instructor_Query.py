@@ -5,8 +5,9 @@ from app.models.Course import Course
 from app.models.Post import Post
 from app.exception import InvalidUsage
 from app.extensions import logger, schema, parqr
-from app.resources import query
-from app.api import verify_non_empty_json_request
+from app.exception import verify_non_empty_json_request
+from app.schemas import query
+
 
 import json
 
@@ -17,7 +18,7 @@ with open('related_courses.json') as f:
 class Instructor_Query(Resource):
 
     @verify_non_empty_json_request
-    # @schema.validate(query)
+    @schema.validate(query)
     def post(self):
         course_id = request.json['course_id']
         if not Course.objects(course_id=course_id) or course_id not in related_courses:

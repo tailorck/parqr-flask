@@ -48,18 +48,6 @@ def on_invalid_usage(error):
 def on_validation_error(error):
     return make_response(jsonify(to_dict(error)), 400)
 
-
-def verify_non_empty_json_request(func):
-    def wrapper(*args, **kwargs):
-        if request.get_data() == '':
-            raise InvalidUsage('No request body provided', 400)
-        if not request.json:
-            raise InvalidUsage('Request body must be in JSON format', 400)
-        return func(*args, **kwargs)
-    wrapper.__name__ = func.__name__
-    return wrapper
-
-
 @app.route('/')
 def index():
     return "Hello, World!"

@@ -15,12 +15,13 @@ from app.statistics import (
 )
 import logging
 from app.extensions import scheduler, logger, schema, redis
-from app.api import verify_non_empty_json_request
+from app.exception import verify_non_empty_json_request
+from app.schemas import course
 
 
 class Course(Resource):
 
-    @verify_non_empty_json_request
+    # @verify_non_empty_json_request
     # @schema.validate(course)
     @jwt_required()
     def post(self):
@@ -46,7 +47,7 @@ class Course(Resource):
             return {'message': 'Course ID already exists'}, 400
 
     # @schema.validate(course)
-    @verify_non_empty_json_request
+    # @verify_non_empty_json_request
     @jwt_required()
     def delete(self):
         cid = request.json['course_id']
