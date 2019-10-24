@@ -19,6 +19,7 @@ logger = logging.getLogger('app')
 
 STOP_WORDS = set(ENGLISH_STOP_WORDS)
 
+
 class ModelTrain(object):
 
     def __init__(self):
