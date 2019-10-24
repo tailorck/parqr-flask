@@ -1,6 +1,6 @@
 import pytest
 
-from app.utils import spacy_clean stringify_followups
+from app.utils import spacy_clean, stringify_followups
 
 
 def test_clean():
