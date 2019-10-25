@@ -24,7 +24,7 @@ def create_app(config_name):
     app : Flask object
     """
     # from app.db import db
-    app = Flask(__name__)
+    app = Flask("app")
     # db.init_app(app)
     # First import the default settings from rq_dashboard to monitor redis
     # queues on the web.

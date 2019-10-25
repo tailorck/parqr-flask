@@ -14,12 +14,14 @@ from app.statistics import (
     total_posts_in_course
 )
 import logging
-from app.extensions import scheduler, logger, schema, redis
+from app.extensions import scheduler, logger, schema, redis, parser
 from app.exception import verify_non_empty_json_request
 from app.schemas import course
+from app.models.Course import Course
+from app.statistics import is_course_id_valid
 
 
-class Course(Resource):
+class Courses(Resource):
 
     # @verify_non_empty_json_request
     # @schema.validate(course)
@@ -86,3 +88,25 @@ class Course_Stat(Resource):
         return {'usingParqr': num_active_uid,
                 'assistedCount': num_post_prevented,
                 'percentTrafficReduced': percent_traffic_reduced}, 202
+
+
+class Course_Enrolled(Resource):
+
+    @jwt_required()
+    def get(self):
+        return parser.get_enrolled_courses()
+
+
+class Course_Supported(Resource):
+
+    @jwt_required()
+    def get(self):
+        return Course.objects.values_list('course_id')
+
+
+class Course_Valid(Resource):
+
+    def get(self):
+        course_id = request.args.get('course_id')
+        is_valid = is_course_id_valid(course_id)
+        return {'valid': is_valid}, 202

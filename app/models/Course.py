@@ -7,4 +7,3 @@ class Course(db.Document):
     course_name = db.StringField(required=True)
     course_number = db.StringField(required=True)
     course_term = db.StringField(required=True)
-    posts = db.ListField(db.ReferenceField(Post, unique=True))

@@ -9,7 +9,7 @@ from app.exception import InvalidUsage
 
 class Top_Post(Resource):
 
-    def get(self, course_id, user='instructor'):
+    def get(self, course_id, user):
         try:
             num_posts = int(request.args.get('num_posts'))
         except (ValueError, TypeError) as e:
