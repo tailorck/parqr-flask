@@ -11,7 +11,7 @@ from app.schemas import feedback_schema
 class Feedbacks(Resource):
 
     @verify_non_empty_json_request
-    @schema.validate(feedback_schema)
+    # @schema.validate(feedback_schema)
     def post(self):
         # Validate the feedback data
         course_id, user_id, query_rec_id, feedback_pid, user_rating = Feedback.unpack_feedback(request.json)

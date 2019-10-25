@@ -10,7 +10,7 @@ from app.schemas import user
 class Users(Resource):
 
     @verify_non_empty_json_request
-    @schema.validate(user)
+    # @schema.validate(user)
     def post(self):
         username = request.json.get('username')
         password = request.json.get('password')

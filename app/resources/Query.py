@@ -15,7 +15,7 @@ with open('related_courses.json') as f:
 
 class Query(Resource):
 
-    @schema.validate(query)
+    # @schema.validate(query)
     @verify_non_empty_json_request
     def post(self):
         '''
@@ -40,7 +40,7 @@ class Query(Resource):
 class Instructor_Query(Resource):
 
     @verify_non_empty_json_request
-    @schema.validate(query)
+    # @schema.validate(query)
     def post(self):
         course_id = request.json['course_id']
         if not Course.objects(course_id=course_id) or course_id not in related_courses:

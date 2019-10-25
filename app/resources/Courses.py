@@ -20,17 +20,27 @@ from app.schemas import course
 from app.models.Course import Course
 from app.statistics import is_course_id_valid
 
+from marshmallow import Schema, fields, ValidationError
+
+
+class courseSchema(Schema):
+    course_id = fields.Str(required=True)
+
 
 class Courses(Resource):
 
-    # @verify_non_empty_json_request
     # @schema.validate(course)
+    @verify_non_empty_json_request
     @jwt_required()
     def post(self):
         '''
         insturctor registers the class
         :return:
         '''
+        try:
+            res = courseSchema().load(request.get_json())
+        except ValidationError as err:
+            return {'message': 'not valid schema'}, 202
         cid = request.json['course_id']
         if not redis.exists(cid):
             logging.info('Registering new course: {}'.format(cid))
@@ -49,7 +59,7 @@ class Courses(Resource):
             return {'message': 'Course ID already exists'}, 400
 
     # @schema.validate(course)
-    # @verify_non_empty_json_request
+    @verify_non_empty_json_request
     @jwt_required()
     def delete(self):
         cid = request.json['course_id']

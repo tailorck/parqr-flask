@@ -10,7 +10,7 @@ from app.schemas import event
 class Events(Resource):
 
     @verify_non_empty_json_request
-    @schema.validate(event)
+    # @schema.validate(event)
     def post(self):
         millis_since_epoch = request.json['time'] / 1000.0
         event = Event()
@@ -20,6 +20,7 @@ class Events(Resource):
         event.user_id = request.json['user_id']
         # event.event_data = EventData(**request.json['eventData'])
         event.event_data = request.json['eventData']
+        event.course_id = request.json['course_id']
 
         event.save()
         logger.info('Recorded {} event from cid {}'

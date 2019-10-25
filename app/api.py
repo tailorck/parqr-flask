@@ -16,9 +16,9 @@ from app.resources.Feedbacks import Feedbacks
 from app.exception import InvalidUsage, to_dict
 from app import app
 
-
 api_endpoint = '/api/2.0'
 api = Api(app)
+
 api.add_resource(Courses, api_endpoint + '/courses')
 api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
 api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')

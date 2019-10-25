@@ -8,7 +8,7 @@ from app.schemas import course
 
 class Parse(Resource):
 
-    @schema.validate(course)
+    # @schema.validate(course)
     @verify_non_empty_json_request
     @jwt_required()
     def post(self):
