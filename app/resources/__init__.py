@@ -51,7 +51,3 @@ user = {
     },
     "required": ["username", "password"]
 }
-
-
-
-
