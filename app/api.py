@@ -2,11 +2,12 @@ from flask import jsonify, make_response, request
 from flask_json_schema import JsonValidationError
 from flask_restful import Api
 from app.resources.Courses import (
-                    Courses,
-                    Course_Stat,
-                    Course_Enrolled,
-                    Course_Supported,
-                    Course_Valid)
+    Courses,
+    Course_Stat,
+    Course_Enrolled,
+    Course_Supported,
+    Course_Valid
+)
 from app.resources.Events import Events
 from app.resources.Parse import Parse
 from app.resources.Query import Query, Instructor_Query
@@ -16,7 +17,7 @@ from app.resources.Feedbacks import Feedbacks
 from app.exception import InvalidUsage, to_dict
 from app import app
 
-api_endpoint = '/api/2.0'
+api_endpoint = '/api/v2.0'
 api = Api(app)
 
 api.add_resource(Courses, api_endpoint + '/courses')
@@ -45,10 +46,11 @@ def on_invalid_usage(error):
 
 @app.errorhandler(JsonValidationError)
 def on_validation_error(error):
-    return make_response(jsonify(to_dict(error)), 400)
+    # return make_response(jsonify(to_dict(error)), 400)
+    return jsonify({'error': error.message,
+                    'errors': [validation_error.message for validation_error
+                               in error.errors]})
 
 @app.route('/')
 def index():
     return "Hello, World!"
-
-

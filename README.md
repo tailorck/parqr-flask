@@ -17,7 +17,7 @@ body, and tags of a new post.
 8. create /data/db
 9. add /data/db in Docker's Preferences' File Sharing
 10. If everything went according to plan, `curl localhost` should return `Hello, World!`.
-11. In Postman, enable PARQR environment.
+11. In Postman, enable PARQR environment. 
 
 #### Debugging
 

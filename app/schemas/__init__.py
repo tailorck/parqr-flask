@@ -66,4 +66,3 @@ feedback_schema = {
         "user_rating": { "type": "number" }
     },
     "required": ["course_id", "user_id", "query_recommendation_id", "feedback_pid", "user_rating"]
-}

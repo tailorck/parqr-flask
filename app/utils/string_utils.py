@@ -27,6 +27,7 @@ def spacy_clean(text, array=True):
     res = [token.lemma_ for token in doc if token.pos_ not in {"PUNCT", "PART", "PRON"}]
     return res if array else "".join(res)
 
+
 def stringify_followups(followup_list):
     return_list = []
     for followup in followup_list:

@@ -30,6 +30,7 @@ def create_app(config_name):
     # queues on the web.
     app.config.from_object(rq_dashboard.default_settings)
     app.register_blueprint(rq_dashboard.blueprint, url_prefix='/rq')
+
     # Override some parameters of rq_dashboard config with app.config
     app.config.from_object(config_dict[config_name])
 

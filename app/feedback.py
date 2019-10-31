@@ -26,6 +26,7 @@ class Feedback(object):
     def requires_feedback(self):
         """ Given a set of recommendations, decides whether
             to request feedback from the user or not.
+
             Returns
             -------
             similar_posts : dict
@@ -52,6 +53,7 @@ class Feedback(object):
         """ Performs a sanity check on the feedback.
             Returns true if the feedback is in a valid format
             and holds valid data. Returns false otherwise.
+
             Parameters
             ----------
             feedback : dict
