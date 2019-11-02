@@ -24,7 +24,7 @@ class Events(Resource):
 
         event.save()
         logger.info('Recorded {} event from cid {}'
-                    .format(event.event_name, event.event_data.course_id))
+                    .format(event.event_name, event.event_data['course_id']))
 
         return {'message': 'success'}, 200
 
