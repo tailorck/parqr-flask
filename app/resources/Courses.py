@@ -111,12 +111,13 @@ class Course_Supported(Resource):
 
     @jwt_required()
     def get(self):
-        return Course.objects.values_list('course_id')
+        return jsonify(Course.objects.values_list('course_id'))
 
 
 class Course_Valid(Resource):
 
     def get(self):
-        course_id = request.args.get('course_id')
+        # course_id = request.args.get('course_id')
+        course_id = request.json['course_id']
         is_valid = is_course_id_valid(course_id)
         return {'valid': is_valid}, 202

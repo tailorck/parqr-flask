@@ -5,7 +5,9 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 
 from app.constants import TFIDF_MODELS
-from app.models import Post, Course
+from app.models.Course import Course
+from app.models.Post import Post
+
 from app.exception import InvalidUsage
 from app.utils import (
     spacy_clean,

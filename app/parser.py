@@ -8,7 +8,9 @@ from piazza_api.exceptions import AuthenticationError, RequestError
 from progressbar import ProgressBar
 
 from app.constants import DATETIME_FORMAT
-from app.models import Course, Post
+from app.models.Course import Course
+from app.models.Post import Post
+
 from app.utils import read_credentials, stringify_followups
 
 logger = logging.getLogger('app')

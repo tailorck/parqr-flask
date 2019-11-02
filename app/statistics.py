@@ -6,7 +6,10 @@ import pandas as pd
 import numpy as np
 
 from app.exception import InvalidUsage
-from app.models import Course, Event, Post
+from app.models.Course import Course
+from app.models.Event import Event
+from app.models.Post import Post
+
 from app.constants import POST_AGE_SIGMOID_OFFSET, POST_MAX_AGE_DAYS
 
 

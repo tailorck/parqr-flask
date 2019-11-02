@@ -5,7 +5,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 
-from app.models import Post, Course, QueryRecommendationPair
+from app.models.Post import Post
+from app.models.Course import Course
+from app.models.QueryRecommendationPair import QueryRecommendationPair
+
 from app.utils import spacy_clean, ModelCache
 from app.constants import (
     TFIDF_MODELS,
