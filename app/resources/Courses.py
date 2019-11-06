@@ -89,7 +89,6 @@ class Course_Stat(Resource):
             start_time = int(request.args.get('start_time'))
         except (ValueError, TypeError) as e:
             return {'message': 'Invalid start time specified'}, 400
-
         num_active_uid = get_unique_users(course_id, start_time)
         num_post_prevented, posts_by_parqr_users = number_posts_prevented(course_id, start_time)
         num_total_posts = total_posts_in_course(course_id)

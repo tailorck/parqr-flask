@@ -69,7 +69,6 @@ def get_unique_users(course_id, starting_time):
         Count of unique users for the course_id in between starting time
         and current time (now).
     """
-
     check_inputs(course_id, starting_time)
 
     starting_date_time = datetime.fromtimestamp(starting_time)
