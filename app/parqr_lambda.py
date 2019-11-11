@@ -92,7 +92,7 @@ class Parqr(object):
         print(payload)
         start = time.time()
         response = lambda_client.invoke(
-            FunctionName='Parqr-Cleaner',
+            FunctionName='Parqr-Cleaner:PROD',
             InvocationType='RequestResponse',
             Payload=bytes(json.dumps(payload), encoding='utf8')
         )
