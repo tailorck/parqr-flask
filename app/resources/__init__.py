@@ -1,3 +1,5 @@
+from app.resources.Query import Query
+
 course = {
     "type": "object",
     "properties": {

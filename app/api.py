@@ -1,37 +1,34 @@
 from flask import jsonify, make_response, request
 from flask_json_schema import JsonValidationError
 from flask_restful import Api
-from app.resources.Courses import (
-    Courses,
-    Course_Stat,
-    Course_Enrolled,
-    Course_Supported,
-    Course_Valid
-)
-from app.resources.Events import Events
-from app.resources.Parse import Parse
-from app.resources.Query import Query, Instructor_Query
-from app.resources.Top_Post import Top_Post
-from app.resources.Users import Users
-from app.resources.Feedbacks import Feedbacks
+# from app.resources.Courses import (
+#     Courses,
+#     Course_Stat,
+#     Course_Enrolled,
+#     Course_Supported,
+#     Course_Valid)
 from app.exception import InvalidUsage, to_dict
+from app.resources import (
+    Query
+)
 from app import app
+import awsgi
 
-api_endpoint = '/api/v2.0'
+api_endpoint = '/Parqr-API'
 api = Api(app)
 
-api.add_resource(Courses, api_endpoint + '/courses')
-api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
-api.add_resource(Course_Enrolled, api_endpoint + '/courses/enrolled')
-api.add_resource(Course_Supported, api_endpoint + '/courses/supported')
-api.add_resource(Course_Valid, api_endpoint + '/courses/valid')
-api.add_resource(Events, api_endpoint + '/events')
-api.add_resource(Instructor_Query, api_endpoint + '/query/instructor')
-api.add_resource(Parse, api_endpoint + '/parse')
+# api.add_resource(Courses, api_endpoint + '/courses')
+# api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
+# api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')
+# api.add_resource(Course_Supported, api_endpoint + '/courses/<string:course_id>/supported')
+# api.add_resource(Course_Valid, api_endpoint + '/courses/<string:course_id>/valid')
+# api.add_resource(Events, api_endpoint + '/events')
+# api.add_resource(Instructor_Query, api_endpoint + '/query/instructor')
+# api.add_resource(Parse, api_endpoint + '/parse')
 api.add_resource(Query, api_endpoint + '/similar_posts')
-api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
-api.add_resource(Users, api_endpoint + '/users')
-api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
+# api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
+# api.add_resource(Users, api_endpoint + '/users')
+# api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
 
 
 @app.errorhandler(404)
@@ -46,11 +43,17 @@ def on_invalid_usage(error):
 
 @app.errorhandler(JsonValidationError)
 def on_validation_error(error):
-    # return make_response(jsonify(to_dict(error)), 400)
-    return jsonify({'error': error.message,
-                    'errors': [validation_error.message for validation_error
-                               in error.errors]})
+    return make_response(jsonify(to_dict(error)), 400)
 
-@app.route('/')
+
+@app.route(api_endpoint, methods=['GET', 'POST'])
 def index():
+    print(request.args.get('hi'))
     return "Hello, World!"
+
+
+def lambda_handler(event, context):
+    print(event, context)
+    response = awsgi.response(app, event, context)
+    print(response)
+    return response
