@@ -8,7 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 
 from app.constants import TFIDF_MODELS
 from app.exception import InvalidUsage
-from app.utils.model_cache import ModelCache
+from app.model_cache import ModelCache
 
 warnings.filterwarnings("ignore")
 

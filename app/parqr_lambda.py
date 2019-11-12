@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import boto3
 
-from app.utils.model_cache import ModelCache
+from app.model_cache import ModelCache
 from app.constants import (
     TFIDF_MODELS,
     SCORE_THRESHOLD,
