@@ -142,3 +142,8 @@ def lambda_handler(event, context):
         for course_id in event["course_ids"]:
             mt.persist_models(course_id)
             print("Course with course_id {}, persisted".format(course_id))
+    elif event.get("source") == 'aws.events':
+        course_id = event.get("resources")[0].split('/')[1]
+        mt.persist_models(course_id)
+        print("Course with course_id {}, persisted".format(course_id))
+
