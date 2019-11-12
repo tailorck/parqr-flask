@@ -6,18 +6,9 @@ import numpy as np
 import simplejson as json
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 
-# from constants import TFIDF_MODELS
-from exception import InvalidUsage
-from model_cache import ModelCache
-from enum import Enum
-
-
-class TFIDF_MODELS(Enum):
-    POST = 0
-    I_ANSWER = 1
-    S_ANSWER = 2
-    FOLLOWUP = 3
-
+from app.constants import TFIDF_MODELS
+from app.exception import InvalidUsage
+from app.utils.model_cache import ModelCache
 
 warnings.filterwarnings("ignore")
 
