@@ -1,12 +1,14 @@
 from flask import jsonify, make_response, request
 from flask_json_schema import JsonValidationError
 from flask_restful import Api
-# from app.resources.Courses import (
-#     Courses,
+from app.resources.Courses import (
+    Courses
+)
 #     Course_Stat,
 #     Course_Enrolled,
 #     Course_Supported,
-#     Course_Valid)
+#     Course_Valid
+
 from app.exception import InvalidUsage, to_dict
 from app.resources import (
     Query
@@ -17,7 +19,7 @@ import awsgi
 api_endpoint = '/Parqr-API'
 api = Api(app)
 
-# api.add_resource(Courses, api_endpoint + '/courses')
+api.add_resource(Courses, api_endpoint + '/courses')
 # api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
 # api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')
 # api.add_resource(Course_Supported, api_endpoint + '/courses/<string:course_id>/supported')
