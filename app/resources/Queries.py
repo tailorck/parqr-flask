@@ -13,7 +13,7 @@ with open('related_courses.json') as f:
     related_courses = json.load(f)
 
 
-class Query(Resource):
+class Queries(Resource):
 
     # @schema.validate(query)
     @verify_non_empty_json_request
@@ -37,7 +37,7 @@ class Query(Resource):
         return similar_posts
 
 
-class Instructor_Query(Resource):
+class Instructor_Queries(Resource):
 
     @verify_non_empty_json_request
     # @schema.validate(query)

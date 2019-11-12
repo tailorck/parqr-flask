@@ -3,15 +3,15 @@ from flask_json_schema import JsonValidationError
 from flask_restful import Api
 from app.resources.Courses import (
     Courses,
-    Course_Stat,
-    Course_Enrolled,
-    Course_Supported,
-    Course_Valid
+    Courses_Stat,
+    Courses_Enrolled,
+    Courses_Supported,
+    Courses_Valid
 )
 from app.resources.Events import Events
 from app.resources.Parse import Parse
-from app.resources.Query import Query, Instructor_Query
-from app.resources.Top_Post import Top_Post
+from app.resources.Queries import Queries, Instructor_Queries
+from app.resources.Top_Posts import Top_Posts
 from app.resources.Users import Users
 from app.resources.Feedbacks import Feedbacks
 from app.exception import InvalidUsage, to_dict
@@ -21,15 +21,15 @@ api_endpoint = '/api/v2.0'
 api = Api(app)
 
 api.add_resource(Courses, api_endpoint + '/courses')
-api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
-api.add_resource(Course_Enrolled, api_endpoint + '/courses/enrolled')
-api.add_resource(Course_Supported, api_endpoint + '/courses/supported')
-api.add_resource(Course_Valid, api_endpoint + '/courses/valid')
+api.add_resource(Courses_Stat, api_endpoint + '/courses/<string:course_id>')
+api.add_resource(Courses_Enrolled, api_endpoint + '/courses/enrolled')
+api.add_resource(Courses_Supported, api_endpoint + '/courses/supported')
+api.add_resource(Courses_Valid, api_endpoint + '/courses/valid')
 api.add_resource(Events, api_endpoint + '/events')
-api.add_resource(Instructor_Query, api_endpoint + '/query/instructor')
+api.add_resource(Instructor_Queries, api_endpoint + '/queries/instructor')
 api.add_resource(Parse, api_endpoint + '/parse')
-api.add_resource(Query, api_endpoint + '/similar_posts')
-api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
+api.add_resource(Queries, api_endpoint + '/similar_posts')
+api.add_resource(Top_Posts, api_endpoint + '/top_posts/<string:course_id>/<string:user>')
 api.add_resource(Users, api_endpoint + '/users')
 api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
 

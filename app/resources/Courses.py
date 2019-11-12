@@ -74,7 +74,7 @@ class Courses(Resource):
             return {'message': 'Course ID does not exists'}, 400
 
 
-class Course_Stat(Resource):
+class Courses_Stat(Resource):
 
     @jwt_required()
     def get(self, course_id):
@@ -99,21 +99,21 @@ class Course_Stat(Resource):
                 'percentTrafficReduced': percent_traffic_reduced}, 202
 
 
-class Course_Enrolled(Resource):
+class Courses_Enrolled(Resource):
 
     @jwt_required()
     def get(self):
         return parser.get_enrolled_courses()
 
 
-class Course_Supported(Resource):
+class Courses_Supported(Resource):
 
     @jwt_required()
     def get(self):
         return jsonify(Course.objects.values_list('course_id'))
 
 
-class Course_Valid(Resource):
+class Courses_Valid(Resource):
 
     def get(self):
         # course_id = request.args.get('course_id')

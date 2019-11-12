@@ -5,9 +5,10 @@ from app.statistics import (
     get_stud_att_needed_posts
 )
 from app.exception import InvalidUsage
+from app.extensions import feedback, parqr, logger, schema
 
 
-class Top_Post(Resource):
+class Top_Posts(Resource):
 
     def get(self, course_id, user):
         try:
@@ -16,6 +17,8 @@ class Top_Post(Resource):
             return {'message': 'Invalid number of posts specified. '
                                'Please specify the number of posts you would like '
                                'as a GET parameter num_posts'}, 400
+        print(course_id)
+        logger.error('course id is : {}'.format(course_id))
 
         posts = None
         if user == 'instructor':
