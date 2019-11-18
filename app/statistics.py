@@ -29,7 +29,7 @@ def is_course_id_valid(course_id):
     is_valid : bool
         True or False based on whether the course_id is valid or not
     """
-    return False if not Course.objects(course_id=course_id) else True
+    return False if not Course.objects(cid=course_id) else True
 
 
 def _validate_starting_time(starting_time):

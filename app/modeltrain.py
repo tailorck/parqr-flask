@@ -43,7 +43,7 @@ class ModelTrain(object):
         Args:
             cid: The course id of the class to vectorize
         """
-        if not Course.objects(course_id=cid):
+        if not Course.objects(cid=cid):
             raise InvalidUsage('Invalid course id provided')
 
         logger.info('Vectorizing words from course: {}'.format(cid))

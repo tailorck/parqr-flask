@@ -60,7 +60,7 @@ class Parser(object):
             return False
 
         # Get handle to the corresponding course document or create a new one
-        course = Course.objects(course_id=course_id)
+        course = Course.objects(cid=course_id)
         if not course:
             enrolled_courses = self._piazza.get_user_classes()
             for enrolled_course in enrolled_courses:
@@ -69,10 +69,10 @@ class Parser(object):
                     course_number = enrolled_course["num"]
                     course_term = enrolled_course["term"]
 
-                    course = Course(course_id=course_id,
-                                    course_name=course_name,
-                                    course_number=course_number,
-                                    course_term=course_term).save()
+                    course = Course(cid=course_id,
+                                    name=course_name,
+                                    number=course_number,
+                                    term=course_term).save()
 
         current_pids = set()
         start_time = time.time()
@@ -153,7 +153,7 @@ class Parser(object):
             logger.error('Unable to parse posts for course: {}. Please '
                          'confirm that the piazza user has access to this '
                          'course'.format(course_id))
-            Course.objects(course_id=course_id).delete()
+            Course.objects(cid=course_id).delete()
             return False
 
         end_time = time.time()

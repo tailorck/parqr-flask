@@ -24,54 +24,71 @@ from marshmallow import Schema, fields, ValidationError
 
 
 class courseSchema(Schema):
-    course_id = fields.Str(required=True)
+    cid = fields.Str(required=True)
 
 
 class Courses(Resource):
 
-    # @schema.validate(course)
-    @verify_non_empty_json_request
     @jwt_required()
-    def post(self):
+    def get(self, course_id):
+        courses = parser.get_enrolled_courses()
+        for c in courses:
+            if c['course_id'] == course_id:
+                logger.info(c)
+                response = jsonify(c)
+                response.status_code = 200
+                return response
+
+        return {'message': 'course not active'}, 400
+
+    # @schema.validate(course)
+    # @verify_non_empty_json_request
+    @jwt_required()
+    def post(self, course_id):
         '''
         insturctor registers the class
         :return:
         '''
-        try:
-            res = courseSchema().load(request.get_json())
-        except ValidationError as err:
-            return {'message': 'not valid schema'}, 202
-        cid = request.json['course_id']
-        if not redis.exists(cid):
-            logging.info('Registering new course: {}'.format(cid))
+        # try:
+        #     res = courseSchema().load(course_id)
+        # except ValidationError as err:
+        #     return {'message': 'invalid input, object invalid'}, 400
+        logging.info("course_id")
+
+        if not redis.exists(course_id):
+            logging.info('Registering new course: {}'.format(course_id))
             curr_time = datetime.now()
             delayed_time = curr_time + timedelta(minutes=5)
 
             new_course_job = scheduler.schedule(scheduled_time=datetime.now(),
                                                 func=parse_and_train_models,
-                                                kwargs={"course_id": cid},
+                                                kwargs={"course_id": course_id},
                                                 interval=COURSE_PARSE_TRAIN_INTERVAL_S,
                                                 timeout=COURSE_PARSE_TRAIN_TIMEOUT_S)
-            redis.set(cid, new_course_job.id)
-            return {'course_id': cid}, 202
+            redis.set(course_id, new_course_job.id)
+            return {'message': 'class registered'}, 201
         else:
             # raise InvalidUsage('Course ID already exists', 400)
-            return {'message': 'Course ID already exists'}, 400
+            return {'message': 'course already registered'}, 409
 
     # @schema.validate(course)
-    @verify_non_empty_json_request
+    # @verify_non_empty_json_request
     @jwt_required()
-    def delete(self):
-        cid = request.json['course_id']
-        if redis.exists(cid):
-            logger.info('Deregistering course: {}'.format(cid))
-            job_id_str = redis.get(cid)
+    def delete(self, course_id):
+        try:
+            res = courseSchema().load({'cid': course_id})
+        except ValidationError as err:
+            return {'message': 'invalid input, object invalid'}, 400
+
+        if redis.exists(course_id):
+            logger.info('Deregistering course: {}'.format(course_id))
+            job_id_str = redis.get(course_id)
             scheduler.cancel(job_id_str)
-            redis.delete(cid)
-            return {'course_id': cid}, 200
+            redis.delete(course_id)
+            return {'course_id': course_id}, 201
         else:
             # raise InvalidUsage('Course ID does not exists', 400)
-            return {'message': 'Course ID does not exists'}, 400
+            return {'message': 'Course ID does not exists'}, 409
 
 
 class Courses_Stat(Resource):
@@ -99,18 +116,28 @@ class Courses_Stat(Resource):
                 'percentTrafficReduced': percent_traffic_reduced}, 202
 
 
-class Courses_Enrolled(Resource):
-
-    @jwt_required()
-    def get(self):
-        return parser.get_enrolled_courses()
+# class Courses_Enrolled(Resource):
+#
+#     @jwt_required()
+#     def get(self):
+#         return parser.get_enrolled_courses()
 
 
 class Courses_Supported(Resource):
 
     @jwt_required()
     def get(self):
-        return jsonify(Course.objects.values_list('course_id'))
+        '''
+        If active, return courses_enrolled.
+        Else, return courses supported.
+        :return:
+        '''
+        args = request.args
+
+        if bool(args['active']):
+            return parser.get_enrolled_courses()
+        else:
+            return jsonify(Course.objects.values_list('cid'))
 
 
 class Courses_Valid(Resource):

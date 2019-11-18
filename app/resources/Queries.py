@@ -8,6 +8,13 @@ from app.schemas import query
 from collections import defaultdict
 from app.models.Post import Post
 import json
+from marshmallow import Schema, fields, ValidationError
+
+
+class queriesSchema(Schema):
+    query = fields.Str(required=True)
+    course_id = fields.Str(required=True)
+
 
 with open('related_courses.json') as f:
     related_courses = json.load(f)
@@ -17,13 +24,18 @@ class Queries(Resource):
 
     # @schema.validate(query)
     @verify_non_empty_json_request
-    def post(self):
+    def post(self, course_id):
         '''
         Given course_id and query, retrieve 5 similar posts
         :return:
         '''
-        course_id = request.json['course_id']
-        if not Course.objects(course_id=course_id):
+        # try:
+        #     res = queriesSchema().load(request.get_json())
+        # except ValidationError as err:
+        #     return {'message': 'not valid schema'}, 202
+
+        # course_id = request.json['course_id']
+        if not Course.objects(cid=course_id):
             logger.error('New un-registered course found: {}'.format(course_id))
             return {'message': "Course with course id {} not supported at this "
                                "time.".format(course_id)}, 400
@@ -41,9 +53,9 @@ class Instructor_Queries(Resource):
 
     @verify_non_empty_json_request
     # @schema.validate(query)
-    def post(self):
-        course_id = request.json['course_id']
-        if not Course.objects(course_id=course_id) or course_id not in related_courses:
+    def post(self, course_id):
+        # course_id = request.json['course_id']
+        if not Course.objects(cid=course_id) or course_id not in related_courses:
             logger.error('New un-registered course found: {}'.format(course_id))
             return {'message': "Course with course id {} not supported at this "
                                "time.".format(course_id)}, 400
@@ -52,7 +64,7 @@ class Instructor_Queries(Resource):
 
         response = defaultdict(list)
         for rel_course_id in related_courses[course_id]:
-            if not Course.objects(course_id=rel_course_id):
+            if not Course.objects(cid=rel_course_id):
                 continue
 
             recs = parqr.get_recommendations(rel_course_id, query, 5)

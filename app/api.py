@@ -4,7 +4,6 @@ from flask_restful import Api
 from app.resources.Courses import (
     Courses,
     Courses_Stat,
-    Courses_Enrolled,
     Courses_Supported,
     Courses_Valid
 )
@@ -20,15 +19,16 @@ from app import app
 api_endpoint = '/api/v2.0'
 api = Api(app)
 
-api.add_resource(Courses, api_endpoint + '/courses')
-api.add_resource(Courses_Stat, api_endpoint + '/courses/<string:course_id>')
-api.add_resource(Courses_Enrolled, api_endpoint + '/courses/enrolled')
-api.add_resource(Courses_Supported, api_endpoint + '/courses/supported')
+api.add_resource(Courses, api_endpoint + '/courses/<string:course_id>')
+api.add_resource(Courses_Stat, api_endpoint + '/courses_stat/<string:course_id>')
+api.add_resource(Courses_Supported, api_endpoint + '/courses')
 api.add_resource(Courses_Valid, api_endpoint + '/courses/valid')
+
+api.add_resource(Queries, api_endpoint + '/courses/<string:course_id>/query/student')
+api.add_resource(Instructor_Queries, api_endpoint + '/courses/<string:course_id>/query/instructor')
+
 api.add_resource(Events, api_endpoint + '/events')
-api.add_resource(Instructor_Queries, api_endpoint + '/queries/instructor')
 api.add_resource(Parse, api_endpoint + '/parse')
-api.add_resource(Queries, api_endpoint + '/similar_posts')
 api.add_resource(Top_Posts, api_endpoint + '/top_posts/<string:course_id>/<string:user>')
 api.add_resource(Users, api_endpoint + '/users')
 api.add_resource(Feedbacks, api_endpoint + '/feedbacks')

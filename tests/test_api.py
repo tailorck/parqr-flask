@@ -178,7 +178,7 @@ def test_deregister_class(mock_redis, mock_scheduler, client, dummy_jobs):
 @pytest.mark.skip(reason='Need to mock out database and queue interactions')
 def test_update_course(client, Post, Course):
     Post.objects(course_id='j8rf9vx65vl23t').delete()
-    Course.objects(course_id='j8rf9vx65vl23t').delete()
+    Course.objects(cid='j8rf9vx65vl23t').delete()
 
     endpoint = '/api/course'
 
@@ -199,7 +199,7 @@ def test_update_course(client, Post, Course):
     time.sleep(3)
     json_resp = json.loads(resp.data)
     assert json_resp['course_id'] == 'j8rf9vx65vl23t'
-    assert Course.objects().first().course_id == 'j8rf9vx65vl23t'
+    assert Course.objects().first().cid == 'j8rf9vx65vl23t'
     assert len(Post.objects()) != 0
 
 

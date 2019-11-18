@@ -6,6 +6,15 @@ from datetime import datetime
 from app.extensions import logger, schema
 from app.exception import verify_non_empty_json_request
 from app.schemas import event
+from marshmallow import Schema, fields, ValidationError
+
+class eventsSchema(Schema):
+    type = fields.Str(required=True)
+    eventName = fields.Str(required=True)
+    time = fields.Integer(required=True)
+    user_id = fields.Str(required=True)
+    eventData = fields.Dict(required=True)
+
 
 class Events(Resource):
 

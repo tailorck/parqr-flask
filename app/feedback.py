@@ -1,4 +1,4 @@
-from app.models.QueryRecommendationPair import QueryRecommendationPair
+from app.models.Query import Query
 from app.models.Course import Course
 from app.models.Post import Post
 
@@ -44,10 +44,10 @@ class Feedback(object):
 
     def save_query_rec_pair(self, cid, query, similar_posts):
         recommended_pids = [similar_posts[score]["pid"] for score in similar_posts.keys()]
-        mongo_query_rec_pair = QueryRecommendationPair(course_id=cid,
-                                                       time=datetime.now(),
-                                                       query=query,
-                                                       recommended_pids=recommended_pids).save()
+        mongo_query_rec_pair = Query(course_id=cid,
+                                     time=datetime.now(),
+                                     query=query,
+                                     recommended_pids=recommended_pids).save()
         return mongo_query_rec_pair
 
     def validate_feedback(self, course_id, user_id, query_rec_id, feedback_pid, user_rating):
@@ -74,7 +74,7 @@ class Feedback(object):
             return False, "The query-recommendation id {} is not valid.".format(query_rec_id)
 
         # Check that the query-recommendation pair exists
-        query_rec_pair = QueryRecommendationPair.objects.with_id(query_rec_id)
+        query_rec_pair = Query.objects.with_id(query_rec_id)
 
         if not query_rec_pair:
             return False, "The query-recommendation id {} does not exist.".format(query_rec_id)
@@ -86,7 +86,7 @@ class Feedback(object):
             return False, "Invalid query string."
 
         # Check for valid course id
-        if not Course.objects(course_id=course_id):
+        if not Course.objects(cid=course_id):
             return False, "Course {} is currently not supported.".format(course_id)
 
         # Check that the feedback is for a post that was actually recommended
@@ -119,14 +119,14 @@ class Feedback(object):
         time = datetime.now()
 
         # Get the course
-        course = Course.objects(course_id=course_id)
+        course = Course.objects(cid=course_id)
 
         # If it doesn't exist, return failure
         if not course:
             return False
 
         # Get the query-recommendation pair
-        query_rec_pair = QueryRecommendationPair.objects.with_id(query_rec_id)
+        query_rec_pair = Query.objects.with_id(query_rec_id)
 
         # If it doesn't exist, return failure
         if not query_rec_pair:
