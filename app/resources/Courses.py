@@ -41,6 +41,8 @@ class Courses(Resource):
 
         return {'message': 'course not active'}, 400
 
+class Actives(Resource):
+
     # @schema.validate(course)
     # @verify_non_empty_json_request
     @jwt_required()
@@ -133,11 +135,10 @@ class Courses_Supported(Resource):
         :return:
         '''
         args = request.args
-
         if bool(args['active']):
-            return parser.get_enrolled_courses()
-        else:
             return jsonify(Course.objects.values_list('cid'))
+        else:
+            return parser.get_enrolled_courses()
 
 
 class Courses_Valid(Resource):
