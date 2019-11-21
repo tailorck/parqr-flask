@@ -33,9 +33,12 @@ def spacy_clean(text, array=True):
     '''
 
     # creating a doc object by applying model to the text
-    doc = nlp(text)
-    res = [token.lemma_ for token in doc if token.pos_ not in {"PUNCT", "PART", "PRON"}]
-    return res if array else " ".join(res)
+    if text is not None:
+        doc = nlp(text)
+        res = [token.lemma_ for token in doc if token.pos_ not in {"PUNCT", "PART", "PRON"}]
+        return res if array else " ".join(res)
+    else:
+        return [] if array else ""
 
 
 def stringify_followups(followup_list):

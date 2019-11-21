@@ -19,6 +19,8 @@ import boto3
 # import logging
 # from app.extensions import scheduler, logger, schema, redis, parser
 from app.exception import verify_non_empty_json_request
+
+
 # from app.models.Course import Course
 # from app.statistics import is_course_id_valid
 
@@ -48,7 +50,7 @@ class Courses(Resource):
 
         lambda_client = boto3.client('lambda')
         lambda_response = lambda_client.add_permission(
-            FunctionName='Parqr-ModelTrain:PROD',
+            FunctionName='Parser:PROD',
             StatementId=cid + str(int(time.time())),
             Action='lambda:InvokeFunction',
             Principal='events.amazonaws.com',

@@ -82,8 +82,7 @@ class Parqr(object):
             scores as the keys
         """
         # Connect to DDB
-        table_name = "course_" + cid
-        course = dynamodb_resource.Table(table_name)
+        course = dynamodb_resource.Table("Posts")
 
         payload = {
             "source": "Query",
@@ -114,6 +113,7 @@ class Parqr(object):
         for pid in final_scores.index[:N]:
             post = course.get_item(
                 Key={
+                    'course_id': cid,
                     'post_id': pid
                 }
             ).get("Item")
@@ -150,10 +150,6 @@ class Parqr(object):
                 on the valid pids of the course and each column representing
                 the score from each model
         """
-        # Connect to DDB
-        table_name = "course_" + cid
-        course = dynamodb_resource.Table(table_name)
-
         # Retrieve all the valid pids for a course since some pids are private
         # or deleted
         # all_pids = self._get_all_pids(cid, course)

@@ -63,14 +63,11 @@ class Parser(object):
         print("Parsing posts for course: {}".format(course_id))
         network = self._piazza.network(course_id)
 
-        # Get handle to the corresponding course document or create a new one
-        partition_key = "course_" + course_id
-
         courses = dynamodb_resource.Table("Courses")
         new_last_modified = int(time.time() * 1000)
         course_info = courses.update_item(
             Key={
-                'course_id': partition_key
+                'course_id': course_id
             },
             UpdateExpression='SET #mod = :mod',
             ExpressionAttributeNames={

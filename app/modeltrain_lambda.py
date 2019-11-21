@@ -2,6 +2,7 @@ import warnings
 
 import time
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
 import numpy as np
 import simplejson as json
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
@@ -21,8 +22,7 @@ class ModelTrain(object):
     def __init__(self):
         """ModelTrain constructor"""
         self.model_cache = ModelCache()
-        self.dynamodb_resource = boto3.resource('dynamodb')
-        self.dynamodb = boto3.client('dynamodb')
+        self.posts = boto3.resource('dynamodb').Table("Posts")
 
     # def persist_all_models(self):
     #     """Creates new models for each course in database and persists each to
@@ -39,12 +39,6 @@ class ModelTrain(object):
         Args:
             cid: The course id of the class to vectorize
         """
-        table_name = "course_" + cid
-        try:
-            _ = self.dynamodb.describe_table(TableName=table_name)
-        except self.dynamodb.exceptions.ResourceNotFoundException:
-            raise InvalidUsage('Invalid course id provided')
-
         print('Vectorizing words from course: {}'.format(cid))
 
         for model in list(TFIDF_MODELS):
@@ -97,9 +91,7 @@ class ModelTrain(object):
                 model_pid_list (list): The pids associated with each string in
                     the words list
         """
-        table_name = "course_" + cid
-
-        posts = self._get_all_posts(self.dynamodb_resource.Table(table_name))
+        posts = self._get_all_posts(cid)
 
         payload = {
             "source": "ModelTrain",
@@ -123,12 +115,17 @@ class ModelTrain(object):
 
         return np.array(words), np.array(model_pid_list)
 
-    def _get_all_posts(self, table):
-        response = table.scan()
+    def _get_all_posts(self, cid):
+        response = self.posts.scan(
+            FilterExpression=Attr('course_id').eq(cid)
+        )
         posts = response['Items']
 
         while 'LastEvaluatedKey' in response:
-            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            response = self.posts.scan(
+                FilterExpression=Attr('course_id').eq(cid),
+                ExclusiveStartKey=response['LastEvaluatedKey']
+            )
             posts.extend(response['Items'])
 
         print(str(len(posts)) + " posts retrieved")
@@ -142,8 +139,5 @@ def lambda_handler(event, context):
         for course_id in event["course_ids"]:
             mt.persist_models(course_id)
             print("Course with course_id {}, persisted".format(course_id))
-    elif event.get("source") == 'aws.events':
-        course_id = event.get("resources")[0].split('/')[1]
-        mt.persist_models(course_id)
-        print("Course with course_id {}, persisted".format(course_id))
+    # TODO: input from parser
 
