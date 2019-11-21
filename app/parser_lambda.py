@@ -76,17 +76,20 @@ class Parser(object):
             ExpressionAttributeValues={
                 ':mod': new_last_modified
             },
-            ReturnValues='UPDATED_OLD'
+            ReturnValues='ALL_OLD'
         ).get('Attributes')
 
         if course_info is None:
             last_modified = 0
+            previous_all_pids = []
         else:
             last_modified = int(course_info.get('last_modified'))
+            previous_all_pids = course_info.get('all_pids')
 
         try:
             feed = network.get_feed()['feed']
             pids = [post['nr'] for post in feed if post['m'] > last_modified]
+            all_pids = [post['nr'] for post in feed]
         except KeyError:
             print('Unable to get feed for course_id: {}'
                   .format(course_id))
@@ -161,6 +164,18 @@ class Parser(object):
                 current_pids.remove(pid)
                 continue
 
+        if list(set(all_pids) - set(previous_all_pids)):
+            deleted_pids = [pid for pid in previous_all_pids
+                            if pid not in all_pids and pid in previous_all_pids]
+            for pid in deleted_pids:
+                print("Deleted post with pid {} and course id {} from Posts".format(pid, course_id))
+                posts.delete_item(
+                    Key={
+                        "course_id": course_id,
+                        "post_id": pid
+                    }
+                )
+
         # TODO: Figure out another way to verify whether the current user has
         # access to a class.
         # In the event the course_id was invalid or no posts were parsed,
@@ -175,6 +190,19 @@ class Parser(object):
         time_elapsed = end_time - start_time
         print('Course updated. {} new posts scraped in: '
               '{:.2f}s'.format(len(current_pids), time_elapsed))
+
+        courses.update_item(
+            Key={
+                'course_id': course_id
+            },
+            UpdateExpression='SET #pids = :pids',
+            ExpressionAttributeNames={
+                '#pids': 'all_pids'
+            },
+            ExpressionAttributeValues={
+                ':pids': all_pids
+            }
+        )
 
         return True
 
