@@ -2,6 +2,7 @@ from datetime import datetime
 import time
 
 import boto3
+import json
 from bs4 import BeautifulSoup
 from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
@@ -61,67 +62,44 @@ class Parser(object):
         """
         print("Parsing posts for course: {}".format(course_id))
         network = self._piazza.network(course_id)
-        stats = network.get_statistics()
+
+        # Get handle to the corresponding course document or create a new one
+        partition_key = "course_" + course_id
+
+        courses = dynamodb_resource.Table("Courses")
+        new_last_modified = int(time.time() * 1000)
+        course_info = courses.update_item(
+            Key={
+                'course_id': partition_key
+            },
+            UpdateExpression='SET #mod = :mod',
+            ExpressionAttributeNames={
+                '#mod': 'last_modified'
+            },
+            ExpressionAttributeValues={
+                ':mod': new_last_modified
+            },
+            ReturnValues='UPDATED_OLD'
+        ).get('Attributes')
+
+        if course_info is None:
+            last_modified = 0
+        else:
+            last_modified = int(course_info.get('last_modified'))
 
         try:
-            total_questions = stats['total']['questions']
+            feed = network.get_feed()['feed']
+            pids = [post['nr'] for post in feed if post['m'] > last_modified]
         except KeyError:
-            print('Unable to get valid statistics for course_id: {}'
+            print('Unable to get feed for course_id: {}'
                   .format(course_id))
             return False
 
-        # Get handle to the corresponding course document or create a new one
-        table_name = "course_" + course_id
-        try:
-            # TODO: test if table will trigger exception => (dynamodb.Table(table_name))
-            _ = dynamodb.describe_table(TableName=table_name)
-        except dynamodb.exceptions.ResourceNotFoundException:
-            enrolled_courses = self._piazza.get_user_classes()
-            for enrolled_course in enrolled_courses:
-                if enrolled_course["nid"] == course_id:
-                    course_name = enrolled_course["name"]
-                    course_number = enrolled_course["num"]
-                    course_term = enrolled_course["term"]
-
-                    dynamodb.create_table(
-                        TableName=table_name,
-                        KeySchema=[
-                            {
-                                'AttributeName': 'post_id',
-                                'KeyType': 'HASH'  # Partition key
-                            }
-                        ],
-                        AttributeDefinitions=[
-                            {
-                                'AttributeName': 'post_id',
-                                'AttributeType': 'N'
-                            }
-                        ],
-                        ProvisionedThroughput={
-                            'ReadCapacityUnits': 10,
-                            'WriteCapacityUnits': 10
-                        },
-                        Tags=[
-                            {
-                                'Key': 'name',
-                                'Value': course_name
-                            },
-                            {
-                                'Key': 'num',
-                                'Value': course_number
-                            },
-                            {
-                                'Key': 'term',
-                                'Value': course_term
-                            }
-                        ]
-                    )
-                    dynamodb_resource.Table(table_name).wait_until_exists()
-        course = dynamodb_resource.Table(table_name)
+        posts = dynamodb_resource.Table("Posts")
 
         current_pids = set()
         start_time = time.time()
-        for pid in range(1, total_questions + 1):
+        for pid in pids:
             # Get the post if available
             try:
                 post = network.get_post(pid)
@@ -130,7 +108,13 @@ class Parser(object):
 
             # Skip deleted and private posts
             if post['status'] == 'deleted' or post['status'] == 'private':
-                continue
+                print("Deleted post with pid {} and course id {} from Posts".format(pid, course_id))
+                posts.delete_item(
+                    Key={
+                        "course_id": course_id,
+                        "post_id": pid
+                    }
+                )
 
             # If the post is neither deleted nor private, it should be in the db
             current_pids.add(pid)
@@ -157,6 +141,7 @@ class Parser(object):
 
             # insert post and add to course's post list
             item = {
+                "course_id": course_id,
                 "post_id": pid,
                 "created": int(created.timestamp()),
                 "subject": subject,
@@ -171,26 +156,13 @@ class Parser(object):
             }
             print(item)
             try:
-                course.put_item(
+                posts.put_item(
                     Item=item
                 )
             except:
                 print("ValidationException")
                 current_pids.remove(pid)
                 continue
-
-        # Get all the posts for this course in the db
-        db_pids = set(range(1, total_questions + 1))
-
-        # Delete pids which are in the db but aren't one of the current pids
-        pids_to_delete = db_pids - current_pids
-        for pid in pids_to_delete:
-            course.delete_item(
-                Key={
-                    "post_id": pid
-                }
-            )
-            print("Deleted post {} while parsing course_id {} ".format(pid, course_id))
 
         # TODO: Figure out another way to verify whether the current user has
         # access to a class.
@@ -202,11 +174,10 @@ class Parser(object):
                   'course'.format(course_id))
             # Course.objects(course_id=course_id).delete()
             return False
-
         end_time = time.time()
         time_elapsed = end_time - start_time
-        print('Course updated. {} posts scraped in: '
-              '{:.2f}s'.format(total_questions, time_elapsed))
+        print('Course updated. {} new posts scraped in: '
+              '{:.2f}s'.format(len(current_pids), time_elapsed))
 
         return True
 
@@ -315,12 +286,26 @@ class Parser(object):
 def lambda_handler(event, context):
     print("Event: {}".format(event))
     print("Context: {}".format(context))
-    course_id = event['course_id']
+    if event.get("source") == 'aws.events':
+        course_id = event.get("resources")[0].split('/')[1]
+    else:
+        course_id = event['course_id']
     print("Course ID: {}".format(course_id))
 
     parser = Parser()
     success = parser.update_posts(course_id)
     if success:
         print("Successfully parsed")
+        lambda_client = boto3.client('lambda')
+        payload = {
+            "course_ids": [
+                course_id
+            ]
+        }
+        lambda_client.invoke(
+            FunctionName='Parqr-ModelTrain:PROD',
+            InvocationType='Event',
+            Payload=bytes(json.dumps(payload), encoding='utf8')
+        )
     else:
         print("Error parsing")
