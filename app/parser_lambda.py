@@ -62,6 +62,7 @@ class Parser(object):
         """
         print("Parsing posts for course: {}".format(course_id))
         network = self._piazza.network(course_id)
+        train = False
 
         courses = dynamodb_resource.Table("Courses")
         new_last_modified = int(time.time() * 1000)
@@ -84,7 +85,7 @@ class Parser(object):
             previous_all_pids = []
         else:
             last_modified = int(course_info.get('last_modified'))
-            previous_all_pids = course_info.get('all_pids')
+            previous_all_pids = [int(i) for i in course_info.get('all_pids')]
 
         try:
             feed = network.get_feed()['feed']
@@ -93,7 +94,7 @@ class Parser(object):
         except KeyError:
             print('Unable to get feed for course_id: {}'
                   .format(course_id))
-            return False
+            return False, None
 
         posts = dynamodb_resource.Table("Posts")
 
@@ -154,38 +155,38 @@ class Parser(object):
                 "num_unresolved_followups": num_unresolved_followups,
                 "num_views": num_views
             }
-            print(item)
             try:
                 posts.put_item(
                     Item=item
                 )
+                train = True
             except:
+                print(item)
                 print("ValidationException")
                 current_pids.remove(pid)
                 continue
 
-        if list(set(all_pids) - set(previous_all_pids)):
-            deleted_pids = [pid for pid in previous_all_pids
-                            if pid not in all_pids and pid in previous_all_pids]
-            for pid in deleted_pids:
-                print("Deleted post with pid {} and course id {} from Posts".format(pid, course_id))
-                posts.delete_item(
-                    Key={
-                        "course_id": course_id,
-                        "post_id": pid
-                    }
-                )
+        deleted_pids = [pid for pid in previous_all_pids if pid not in all_pids]
+        for pid in deleted_pids:
+            print("Deleted post with pid {} and course id {} from Posts".format(pid, course_id))
+            posts.delete_item(
+                Key={
+                    "course_id": course_id,
+                    "post_id": pid
+                }
+            )
+            train = True
 
         # TODO: Figure out another way to verify whether the current user has
         # access to a class.
         # In the event the course_id was invalid or no posts were parsed,
         # delete course object # TODO: Should we delete the table?
-        if len(current_pids) == 0:
+        if len(pids) != 0 and len(current_pids) == 0:
             print('Unable to parse posts for course: {}. Please '
                   'confirm that the piazza user has access to this '
                   'course'.format(course_id))
             # Course.objects(course_id=course_id).delete()
-            return False
+            return False, None
         end_time = time.time()
         time_elapsed = end_time - start_time
         print('Course updated. {} new posts scraped in: '
@@ -204,7 +205,7 @@ class Parser(object):
             }
         )
 
-        return True
+        return True, train
 
     def _extract_num_unresolved(self, post):
         if len(post['children']) > 0:
@@ -318,19 +319,21 @@ def lambda_handler(event, context):
     print("Course ID: {}".format(course_id))
 
     parser = Parser()
-    success = parser.update_posts(course_id)
+    success, train = parser.update_posts(course_id)
     if success:
         print("Successfully parsed")
-        lambda_client = boto3.client('lambda')
-        payload = {
-            "course_ids": [
-                course_id
-            ]
-        }
-        lambda_client.invoke(
-            FunctionName='Parqr-ModelTrain:PROD',
-            InvocationType='Event',
-            Payload=bytes(json.dumps(payload), encoding='utf8')
-        )
+        if train:
+            print("Sending posts to ModelTrain")
+            lambda_client = boto3.client('lambda')
+            payload = {
+                "course_ids": [
+                    course_id
+                ]
+            }
+            lambda_client.invoke(
+                FunctionName='Parqr-ModelTrain:PROD',
+                InvocationType='Event',
+                Payload=bytes(json.dumps(payload), encoding='utf8')
+            )
     else:
         print("Error parsing")
