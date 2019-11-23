@@ -155,13 +155,14 @@ class Parser(object):
                 "num_unresolved_followups": num_unresolved_followups,
                 "num_views": num_views
             }
+            cleaned_item = {k: v for k, v in item.items() if v is not None}
             try:
                 posts.put_item(
-                    Item=item
+                    Item=cleaned_item
                 )
                 train = True
             except:
-                print(item)
+                print(pid, item)
                 print("ValidationException")
                 current_pids.remove(pid)
                 continue

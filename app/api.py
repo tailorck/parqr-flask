@@ -1,9 +1,7 @@
 from flask import jsonify, make_response, request
 from flask_json_schema import JsonValidationError
 from flask_restful import Api
-from app.resources.Courses import (
-    Courses
-)
+
 #     Course_Stat,
 #     Course_Enrolled,
 #     Course_Supported,
@@ -11,7 +9,9 @@ from app.resources.Courses import (
 
 from app.exception import InvalidUsage, to_dict
 from app.resources import (
-    Query
+    Query,
+    Courses,
+    Top_Post
 )
 from app import app
 import awsgi
@@ -26,9 +26,8 @@ api.add_resource(Courses, api_endpoint + '/courses')
 # api.add_resource(Course_Valid, api_endpoint + '/courses/<string:course_id>/valid')
 # api.add_resource(Events, api_endpoint + '/events')
 # api.add_resource(Instructor_Query, api_endpoint + '/query/instructor')
-# api.add_resource(Parse, api_endpoint + '/parse')
 api.add_resource(Query, api_endpoint + '/similar_posts')
-# api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
+api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
 # api.add_resource(Users, api_endpoint + '/users')
 # api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
 
