@@ -120,13 +120,19 @@ class Courses(Resource):
 #                 'percentTrafficReduced': percent_traffic_reduced}, 202
 #
 #
-# class Course_Enrolled(Resource):
-#
-#     @jwt_required()
-#     def get(self):
-#         return parser.get_enrolled_courses()
-#
-#
+class Course_Enrolled(Resource):
+
+    # @jwt_required()
+    def get(self, course_id):
+        courses = boto3.resource("dynamodb").Table("Courses")
+        exists = courses.get_item(
+            Key={
+                "course_id": course_id
+            }
+        ).get("Item")
+        return True if exists is not None else False
+
+
 # class Course_Supported(Resource):
 #
 #     @jwt_required()

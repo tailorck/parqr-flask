@@ -1,6 +1,6 @@
 from app.resources.Query import Query
 from app.resources.Top_Post import Top_Post
-from app.resources.Courses import Courses
+from app.resources.Courses import Courses, Course_Enrolled
 
 course = {
     "type": "object",

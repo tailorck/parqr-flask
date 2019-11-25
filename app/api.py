@@ -11,7 +11,8 @@ from app.exception import InvalidUsage, to_dict
 from app.resources import (
     Query,
     Courses,
-    Top_Post
+    Top_Post,
+    Course_Enrolled
 )
 from app import app
 import awsgi
@@ -21,7 +22,7 @@ api = Api(app)
 
 api.add_resource(Courses, api_endpoint + '/courses')
 # api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
-# api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')
+api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')
 # api.add_resource(Course_Supported, api_endpoint + '/courses/<string:course_id>/supported')
 # api.add_resource(Course_Valid, api_endpoint + '/courses/<string:course_id>/valid')
 # api.add_resource(Events, api_endpoint + '/events')
