@@ -6,8 +6,6 @@ import numpy as np
 import pandas as pd
 
 from app.models.Post import Post
-from app.models.Course import Course
-from app.models.Query import Query
 
 from app.utils import spacy_clean, ModelCache
 from app.constants import (

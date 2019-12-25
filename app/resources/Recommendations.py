@@ -1,14 +1,13 @@
 from flask_restful import Resource
-from flask import request, jsonify
+from flask import request
 from app.statistics import (
     get_inst_att_needed_posts,
     get_stud_att_needed_posts
 )
-from app.exception import InvalidUsage
-from app.extensions import feedback, parqr, logger, schema
+from app.extensions import logger
 
 
-class Student_Recommendations(Resource):
+class StudentRecommendations(Resource):
 
     def get(self, course_id):
         try:
@@ -21,7 +20,8 @@ class Student_Recommendations(Resource):
         posts = get_stud_att_needed_posts(course_id, num_posts)
         return {'posts': posts}, 200
 
-class Instructor_Recommendations(Resource):
+
+class InstructorRecommendations(Resource):
 
     def get(self, course_id):
         try:

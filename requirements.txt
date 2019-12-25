@@ -8,6 +8,7 @@ flask_httpauth==3.2.4
 flask-jwt==0.3.2
 flask_restful==0.3.7
 flask_mongoengine==0.9.3
+flask-marshmallow==0.10.1
 gunicorn==19.7.1
 marshmallow==3.2.1
 mock==2.0.0

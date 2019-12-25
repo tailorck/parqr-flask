@@ -2,40 +2,33 @@ from flask import jsonify, make_response, request
 from flask_json_schema import JsonValidationError
 from flask_restful import Api
 from app.resources.Courses import (
-    Courses,
-    Actives,
-    Courses_Stat,
-    Courses_Supported,
-    Courses_Valid
+    CoursesList,
+    ActiveCourse,
 )
-from app.resources.Events import Events
+from app.resources.Event import Event
 from app.resources.Parse import Parse
 from app.resources.Queries import Student_Queries, Instructor_Queries
-from app.resources.Recommendations import Student_Recommendations, Instructor_Recommendations
+from app.resources.Recommendations import StudentRecommendations, InstructorRecommendations
 from app.resources.Users import Users
-from app.resources.Feedbacks import Feedbacks
+from app.resources.Feedback import Feedback
 from app.exception import InvalidUsage, to_dict
 from app import app
 
 api_endpoint = '/api/v2.0'
 api = Api(app)
 
-api.add_resource(Courses, api_endpoint + '/courses/<string:course_id>')
-api.add_resource(Actives, api_endpoint + '/courses/<string:course_id>')
+api.add_resource(CoursesList, api_endpoint + '/courses')
+api.add_resource(ActiveCourse, api_endpoint + '/course/<string:course_id>/active')
 
-api.add_resource(Courses_Stat, api_endpoint + '/courses_stat/<string:course_id>')
-api.add_resource(Courses_Supported, api_endpoint + '/courses')
-api.add_resource(Courses_Valid, api_endpoint + '/courses/valid')
+api.add_resource(Student_Queries, api_endpoint + '/course/<string:course_id>/query/student')
+api.add_resource(Instructor_Queries, api_endpoint + '/course/<string:course_id>/query/instructor')
 
-api.add_resource(Student_Queries, api_endpoint + '/courses/<string:course_id>/query/student')
-api.add_resource(Instructor_Queries, api_endpoint + '/courses/<string:course_id>/query/instructor')
-
-api.add_resource(Student_Recommendations, api_endpoint + '/courses/<string:course_id>/recommendation/student')
-api.add_resource(Instructor_Recommendations, api_endpoint + '/courses/<string:course_id>/recommendation/instructor')
+api.add_resource(StudentRecommendations, api_endpoint + '/course/<string:course_id>/recommendation/student')
+api.add_resource(InstructorRecommendations, api_endpoint + '/course/<string:course_id>/recommendation/instructor')
 
 
-api.add_resource(Events, api_endpoint + '/events')
-api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
+api.add_resource(Event, api_endpoint + '/event')
+api.add_resource(Feedback, api_endpoint + '/feedback')
 
 api.add_resource(Users, api_endpoint + '/users')
 api.add_resource(Parse, api_endpoint + '/parse')

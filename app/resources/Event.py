@@ -1,34 +1,15 @@
 from flask_restful import Resource
 from app.models.Event import Event
-# from app.models.EventData import EventData
-from flask import request, jsonify
+from flask import request
 from datetime import datetime
-from app.extensions import logger, schema
+from app.extensions import logger
 from app.exception import verify_non_empty_json_request
-from app.schemas import event
-from marshmallow import Schema, fields, ValidationError
 
 
-class eventsSchema(Schema):
-    event_type = fields.Str(required=True)
-    event_name = fields.Str(required=True)
-    time = fields.Integer(required=True)
-    user_id = fields.Str(required=True)
-    course_id = fields.Str(required=True)
-    event_data = fields.Dict(required=True)
-
-
-class Events(Resource):
+class Event(Resource):
 
     @verify_non_empty_json_request
-    # @schema.validate(event)
     def post(self):
-        try:
-            res = eventsSchema().load(request.get_json())
-        except ValidationError as err:
-            logger.info(err)
-            return {'message': 'invalid input, object invalid'}, 400
-
         millis_since_epoch = request.json['time'] / 1000.0
         event = Event()
         event.event_type = request.json['event_type']
@@ -43,4 +24,3 @@ class Events(Resource):
                     .format(event.event_name, event.event_data['course_id']))
 
         return {'message': 'success'}, 200
-
