@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import request
-from app.models.User import User
+from app.models.user import User
 from app.exception import verify_non_empty_json_request
 
 

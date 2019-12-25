@@ -1,25 +1,24 @@
 from flask_restful import Resource
-from app.models.Course import Course
+from app.models.course import Course
 from flask import request
 from app.extensions import feedback, parqr, logger
 from app.exception import verify_non_empty_json_request
 from collections import defaultdict
-from app.models.Post import Post
+from app.models.post import Post
 import json
 
 with open('related_courses.json') as f:
     related_courses = json.load(f)
 
 
-class Query(Resource):
+class StudentQuery(Resource):
 
-    # @schema.validate(query)
     @verify_non_empty_json_request
     def post(self):
-        '''
+        """
         Given course_id and query, retrieve 5 similar posts
         :return:
-        '''
+        """
         course_id = request.json['course_id']
         if not Course.objects(course_id=course_id):
             logger.error('New un-registered course found: {}'.format(course_id))
@@ -35,10 +34,9 @@ class Query(Resource):
         return similar_posts
 
 
-class Instructor_Query(Resource):
+class InstructorQuery(Resource):
 
     @verify_non_empty_json_request
-    # @schema.validate(query)
     def post(self):
         course_id = request.json['course_id']
         if not Course.objects(course_id=course_id) or course_id not in related_courses:

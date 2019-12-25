@@ -23,11 +23,9 @@ def create_app(config_name):
     -------
     app : Flask object
     """
-    # from app.db import db
     app = Flask("app")
-    # db.init_app(app)
-    # First import the default settings from rq_dashboard to monitor redis
-    # queues on the web.
+
+    # First import the default settings from rq_dashboard to monitor redis queues on the web.
     app.config.from_object(rq_dashboard.default_settings)
     app.register_blueprint(rq_dashboard.blueprint, url_prefix='/rq')
 

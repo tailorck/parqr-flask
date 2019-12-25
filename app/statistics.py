@@ -6,9 +6,9 @@ import pandas as pd
 import numpy as np
 
 from app.exception import InvalidUsage
-from app.models.Course import Course
-from app.models.Event import Event
-from app.models.Post import Post
+from app.models.course import Course
+from app.models.event import Event
+from app.models.post import Post
 
 from app.constants import POST_AGE_SIGMOID_OFFSET, POST_MAX_AGE_DAYS
 
@@ -29,7 +29,7 @@ def is_course_id_valid(course_id):
     is_valid : bool
         True or False based on whether the course_id is valid or not
     """
-    return False if not Course.objects(cid=course_id) else True
+    return False if not Course.objects(course_id=course_id) else True
 
 
 def _validate_starting_time(starting_time):
@@ -170,17 +170,17 @@ def _number_posts_prevented(course_id, starting_time):
         Number of prevented posts are to be reported for the course_id in between
         starting time and current time (now).
     posts_by_parqr_users : int
-        Number of posts submitted by parqr users only. It will be a subset of 
+        Number of posts submitted by parqr users only. It will be a subset of
         total public posts of a class
     """
 
     check_inputs(course_id, starting_time)
-    
+
     # Extract relevant information from mongoDB for the course_id
     starting_datetime = datetime.fromtimestamp(starting_time)
-    events = Event.objects(event_data__course_id=course_id, 
+    events = Event.objects(event_data__course_id=course_id,
                             time__gt=starting_datetime)
-    
+
     events = events.order_by('user_id', 'time')
 
     events_df_course_id_sorted = events_bqs_to_df(events)
@@ -476,7 +476,7 @@ def get_weekly_statistics(course_id, statistical_function):
     for index in range(0, len(keys) - 1):
         next_week = statistical_function(course_id, weekly_stats[keys[index + 1]])
         weekly_stats[keys[index]] = original - next_week
-        original = next_week 
+        original = next_week
 
     weekly_stats[keys[len(keys) - 1]] = statistical_function(course_id, weekly_stats[keys[len(keys) - 1]])
 

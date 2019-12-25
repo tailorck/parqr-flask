@@ -15,7 +15,7 @@ from rq_scheduler import Scheduler
 from app import app
 from app.parser import Parser
 from app.parqr import Parqr
-from app.models.User import User
+from app.models.user import User
 from app.feedback import Feedback
 from app.constants import (
     FEEDBACK_MAX_RATING,
@@ -39,7 +39,7 @@ def identity(payload):
 jwt = JWT(app, verify, identity)
 parqr = Parqr()
 parser = Parser()
-ma = Marsh
+ma = Marshmallow()
 logger = logging.getLogger('app')
 redis_host = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']

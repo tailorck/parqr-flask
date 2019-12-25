@@ -1,5 +1,5 @@
 from app.db import db
-from app.models.QueryRecommendationPair import QueryRecommendationPair
+from app.models.query_recommendation_pair import QueryRecommendationPair
 
 
 class StudentFeedbackRecord(db.Document):

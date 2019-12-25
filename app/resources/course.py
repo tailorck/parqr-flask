@@ -3,7 +3,7 @@ import logging
 
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
-from flask import request, jsonify
+from flask import jsonify
 
 from app.tasksrq import parse_and_train_models
 from app.exception import verify_non_empty_json_request

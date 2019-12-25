@@ -5,8 +5,8 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 
 from app.constants import TFIDF_MODELS
-from app.models.Course import Course
-from app.models.Post import Post
+from app.models.course import Course
+from app.models.post import Post
 
 from app.exception import InvalidUsage
 from app.utils import (
@@ -43,7 +43,7 @@ class ModelTrain(object):
         Args:
             cid: The course id of the class to vectorize
         """
-        if not Course.objects(cid=cid):
+        if not Course.objects(course_id=cid):
             raise InvalidUsage('Invalid course id provided')
 
         logger.info('Vectorizing words from course: {}'.format(cid))

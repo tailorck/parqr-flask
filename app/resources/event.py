@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from app.models.Event import Event
+from app.models.event import Event
 from flask import request
 from datetime import datetime
 from app.extensions import logger

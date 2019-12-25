@@ -8,16 +8,16 @@ import pytest
 
 @pytest.fixture
 def Post():
-    from app.models import Post
-    Post.drop_collection()
-    return Post
+    from app.models import post
+    post.drop_collection()
+    return post
 
 
 @pytest.fixture
 def Course():
-    from app.models import Course
-    Course.drop_collection()
-    return Course
+    from app.models import course
+    course.drop_collection()
+    return course
 
 
 @pytest.fixture

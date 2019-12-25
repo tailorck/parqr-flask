@@ -1,7 +1,7 @@
 from app.db import db
 # from app.models import db
 
-from app.models.Followup import Followup
+from app.models.followup import Followup
 
 
 class Post(db.Document):

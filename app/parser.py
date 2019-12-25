@@ -8,8 +8,8 @@ from piazza_api.exceptions import AuthenticationError, RequestError
 from progressbar import ProgressBar
 
 from app.constants import DATETIME_FORMAT
-from app.models.Course import Course
-from app.models.Post import Post
+from app.models.course import Course
+from app.models.post import Post
 
 from app.utils import read_credentials, stringify_followups
 
@@ -168,7 +168,7 @@ class Parser(object):
 
         Parameters
         ----------
-        curr_post : app.models.Post
+        curr_post : app.models.post
             The current post in the database.
         new_fields : dict
             A dictionary of the most recent scraped fields for the given post
