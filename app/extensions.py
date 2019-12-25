@@ -8,7 +8,6 @@ import logging
 from flask_jwt import JWT
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
-from flask_marshmallow import Marshmallow
 from redis import Redis
 from rq_scheduler import Scheduler
 
@@ -39,7 +38,6 @@ def identity(payload):
 jwt = JWT(app, verify, identity)
 parqr = Parqr()
 parser = Parser()
-ma = Marshmallow()
 logger = logging.getLogger('app')
 redis_host = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']
