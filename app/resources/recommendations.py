@@ -3,7 +3,6 @@ from flask_restful import Resource
 from marshmallow.exceptions import ValidationError
 
 from app.schemas.recommendations import RecommendationSchema
-from app.extensions import logger
 from app.statistics import (
     get_inst_att_needed_posts,
     get_stud_att_needed_posts

@@ -2,10 +2,11 @@ from logging.handlers import RotatingFileHandler
 import logging
 import os
 
-from flask import Flask
+from flask import Flask, request
 import rq_dashboard
 
-from ..config import config_dict
+from app.config import config_dict
+from app.exception import InvalidUsage
 
 logger = logging.getLogger('app')
 
@@ -53,3 +54,14 @@ def create_app(config_name):
 def read_credentials():
     """Method to read encrypted .login file for Piazza username and password"""
     return 'parqrdevteam@gmail.com', 'parqrproducers'
+
+
+def verify_non_empty_json_request(func):
+    def wrapper(*args, **kwargs):
+        if request.get_data() == '':
+            raise InvalidUsage('No request body provided', 400)
+        if not request.json:
+            raise InvalidUsage('Request body must be in JSON format', 400)
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper

@@ -2,7 +2,7 @@ from flask_restful import Resource
 from flask import request
 from app.extensions import feedback
 from app.feedback import Feedback
-from app.exception import verify_non_empty_json_request
+from app.utils import verify_non_empty_json_request
 
 
 class Feedback(Resource):

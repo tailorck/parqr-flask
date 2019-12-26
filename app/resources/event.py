@@ -3,7 +3,7 @@ from app.models.event import Event
 from flask import request
 from datetime import datetime
 from app.extensions import logger
-from app.exception import verify_non_empty_json_request
+from app.utils import verify_non_empty_json_request
 
 
 class Event(Resource):

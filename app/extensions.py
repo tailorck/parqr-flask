@@ -46,7 +46,7 @@ feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
 redis = Redis(host=redis_host, port=redis_port, db=0)
 scheduler = Scheduler(connection=redis)
 auth = HTTPBasicAuth()
-logging.info('Ready to serve requests')
+logger.info('Ready to serve requests')
 
 
 CORS(app)

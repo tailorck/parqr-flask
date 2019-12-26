@@ -2,7 +2,7 @@ from flask_restful import Resource
 from app.models.course import Course
 from flask import request
 from app.extensions import feedback, parqr, logger
-from app.exception import verify_non_empty_json_request
+from app.utils import verify_non_empty_json_request
 from collections import defaultdict
 from app.models.post import Post
 import json
