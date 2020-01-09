@@ -34,6 +34,7 @@ jobs:
       - run:
           name: install spacy model
           command: |
+            . venv/bin/activate
             python -m spacy download en
 
       - save_cache:
