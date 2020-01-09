@@ -136,31 +136,6 @@ class Parser(object):
                                                                   set__followups=followups,
                                                                   set__num_unresolved_followups=num_unresolved_followups,
                                                                   set__num_views=num_views)
-            """
-            if Post.objects(course_id=course_id, post_id=pid):
-                db_post = Post.objects.get(course_id=course_id, post_id=pid)
-                new_fields = dict(subject=subject, body=body, tags=tags,
-                                  post_type=post_type, s_answer=s_answer,
-                                  i_answer=i_answer, followups=followups,
-                                  num_unresolved_followups=num_unresolved_followups,
-                                  num_views=num_views)
-                is_updated = self._check_for_updates(db_post, new_fields)
-
-                if is_updated is True:
-                    db_post.update(subject=subject, created=created, body=body,
-                                   tags=tags,
-                                   post_type=post_type,
-                                   s_answer=s_answer, i_answer=i_answer,
-                                   followups=followups,
-                                   num_unresolved_followups=num_unresolved_followups,
-                                   num_views=num_views)
-            else:
-                mongo_post = Post(course_id=course_id, created=created, post_id=pid,
-                                  subject=subject, body=body, tags=tags,
-                                  post_type=post_type, s_answer=s_answer, i_answer=i_answer,
-                                  followups=followups, num_views=num_views,
-                                  num_unresolved_followups=num_unresolved_followups).save()
-            """
 
         # self._delete_privated_posts(course_id, current_pids)
 
