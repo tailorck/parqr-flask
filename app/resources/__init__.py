@@ -1,6 +1,6 @@
-from app.resources.Query import Query, InstructorQuery
-from app.resources.Top_Post import Top_Post
-from app.resources.Courses import Courses, CourseEnrolled, Course_Supported, CoursesCourseID
+from app.resources.query import Query, InstructorQuery
+from app.resources.recommendations import Top_Post
+from app.resources.course import Courses, CourseEnrolled, CoursesCourseID
 
 course = {
     "type": "object",
