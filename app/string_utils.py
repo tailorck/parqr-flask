@@ -1,6 +1,5 @@
 import logging
 import spacy
-import re
 
 logger = logging.getLogger('app')
 

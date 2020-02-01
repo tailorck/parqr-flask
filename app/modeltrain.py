@@ -8,11 +8,11 @@ from app.constants import TFIDF_MODELS
 from app.models.course import Course
 from app.models.post import Post
 from app.exception import InvalidUsage
-from app.utils import (
+from app.string_utils import (
     spacy_clean,
     stringify_followups,
-    ModelCache
 )
+from app.model_cache import ModelCache
 
 warnings.filterwarnings("ignore")
 
