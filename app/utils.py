@@ -1,14 +1,7 @@
-from logging.handlers import RotatingFileHandler
-import logging
-import os
-
 from flask import Flask, request
-import rq_dashboard
 
 from app.config import config_dict
 from app.exception import InvalidUsage
-
-logger = logging.getLogger('app')
 
 
 def create_app(config_name):
@@ -26,27 +19,8 @@ def create_app(config_name):
     """
     app = Flask("app")
 
-    # First import the default settings from rq_dashboard to monitor redis queues on the web.
-    app.config.from_object(rq_dashboard.default_settings)
-    app.register_blueprint(rq_dashboard.blueprint, url_prefix='/rq')
-
     # Override some parameters of rq_dashboard config with app.config
     app.config.from_object(config_dict[config_name])
-
-    if not os.path.isdir(app.config['LOG_FOLDER']):
-        os.makedirs(app.config['LOG_FOLDER'])
-
-    log_file = os.path.join(app.config['LOG_FOLDER'], 'app.log')
-    log_level = app.config['LOG_LEVEL']
-    fh = RotatingFileHandler(log_file, maxBytes=100*1024*1024, backupCount=5)
-
-    formatter = logging.Formatter('[%(asctime)s] %(levelname)s '
-                                  '%(module)s: %(message)s')
-    app.logger.addHandler(fh)
-    for handler in app.logger.handlers:
-        handler.setFormatter(formatter)
-        handler.setLevel(log_level)
-    app.logger.setLevel(log_level)
 
     return app
 

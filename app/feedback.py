@@ -1,7 +1,3 @@
-from app.models.query_recommendation_pair import QueryRecommendationPair
-from app.models.student_feedback_record import StudentFeedbackRecord
-from app.models.course import Course
-from app.models.post import Post
 from datetime import datetime
 from bson.objectid import ObjectId
 import numpy as np

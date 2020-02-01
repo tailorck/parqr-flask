@@ -1,14 +1,8 @@
-from flask_restful import Resource
-from app.models.event import Event
-from flask import request
-from datetime import datetime
-from app.extensions import logger
-from app.utils import verify_non_empty_json_request
+from flask_restful import Resource, request
 
 
 class Event(Resource):
 
-    @verify_non_empty_json_request
     def post(self):
         millis_since_epoch = request.json['time'] / 1000.0
         event = Event()

@@ -1,6 +1,6 @@
-from flask import request
-from flask_restful import Resource
 from marshmallow.exceptions import ValidationError
+from flask_restful import Resource
+from flask import request
 
 from app.schemas.recommendations import RecommendationSchema
 from app.statistics import (
