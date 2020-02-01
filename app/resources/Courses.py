@@ -1,44 +1,67 @@
 from flask_restful import Resource
 # from flask_jwt import jwt_required
-# from datetime import timedelta
-from flask import request, jsonify
+from flask import request
 import json
 import time
-# from app.tasksrq import parse_and_train_models
-# from datetime import datetime
-# from app.constants import (
-#     COURSE_PARSE_TRAIN_TIMEOUT_S,
-#     COURSE_PARSE_TRAIN_INTERVAL_S
-# )
 import boto3
-# from app.statistics import (
-#     get_unique_users,
-#     number_posts_prevented,
-#     total_posts_in_course
-# )
-# import logging
-# from app.extensions import scheduler, logger, schema, redis, parser
 from app.exception import verify_non_empty_json_request
+from piazza_api import Piazza
+from app.utils import read_credentials
 
 
-# from app.models.Course import Course
-# from app.statistics import is_course_id_valid
+def get_enrolled_courses_from_piazza():
+    piazza = Piazza()
+    email, password = read_credentials()
+    piazza.user_login(email, password)
+    enrolled_courses = piazza.get_user_classes()
+    return enrolled_courses
 
 
 class Courses(Resource):
 
     @verify_non_empty_json_request
+    def get(self):
+        enrolled_courses = get_enrolled_courses_from_piazza()
+        return [{'name': d['name'], 'course_id': d['nid'], 'term': d['term'],
+                 'course_num': d['num']} for d in enrolled_courses], 200
+
+
+class CoursesCourseID(Resource):
+
+    @verify_non_empty_json_request
+    def get(self, course_id):
+        enrolled_courses = get_enrolled_courses_from_piazza()
+        for course in enrolled_courses:
+            if course['course_id'] == course_id:
+                return course, 200
+        return {'message': 'Bad input parameter. Course does not exist.'}, 400
+
+
+class CourseEnrolled(Resource):
+
     # @jwt_required()
-    def post(self):
+    def get(self, course_id):
+        courses = boto3.resource("dynamodb").Table("Courses")
+        exists = courses.get_item(
+            Key={
+                "course_id": course_id
+            }
+        ).get("Item")
+
+        if exists is not None:
+            enrolled_courses = get_enrolled_courses_from_piazza()
+            for course in enrolled_courses:
+                if course['course_id'] == course_id:
+                    return course, 200
+        else:
+            return {'message': 'Bad input parameter. Course does not exist.'}, 400
+
+    # @jwt_required()
+    def post(self, cid):
         """
         instructor registers the class
         :return:
         """
-        try:
-            cid = request.json['course_id']
-        except KeyError as err:
-            print(request)
-            return {'message': 'not valid schema'}, 400
         print('Registering new course: {}'.format(cid))
 
         cloudwatch_events = boto3.client("events")
@@ -93,57 +116,3 @@ class Courses(Resource):
         )
 
         return {'course_id': cid}, 200
-
-
-# class Course_Stat(Resource):
-#
-#     @jwt_required()
-#     def get(self, course_id):
-#         '''
-#         Get num of unique users, num of post prevented, percent of Traffic reduced
-#         get_parqr_stats
-#         :param course_id:
-#         :return:
-#         '''
-#
-#         try:
-#             start_time = int(request.args.get('start_time'))
-#         except (ValueError, TypeError) as e:
-#             return {'message': 'Invalid start time specified'}, 400
-#         num_active_uid = get_unique_users(course_id, start_time)
-#         num_post_prevented, posts_by_parqr_users = number_posts_prevented(course_id, start_time)
-#         num_total_posts = total_posts_in_course(course_id)
-#         num_all_post = float(posts_by_parqr_users + num_post_prevented)
-#         percent_traffic_reduced = (num_post_prevented / num_all_post) * 100
-#         return {'usingParqr': num_active_uid,
-#                 'assistedCount': num_post_prevented,
-#                 'percentTrafficReduced': percent_traffic_reduced}, 202
-#
-#
-class Course_Enrolled(Resource):
-
-    # @jwt_required()
-    def get(self, course_id):
-        courses = boto3.resource("dynamodb").Table("Courses")
-        exists = courses.get_item(
-            Key={
-                "course_id": course_id
-            }
-        ).get("Item")
-        return True if exists is not None else False
-
-
-# class Course_Supported(Resource):
-#
-#     @jwt_required()
-#     def get(self):
-#         return jsonify(Course.objects.values_list('course_id'))
-#
-#
-# class Course_Valid(Resource):
-#
-#     def get(self):
-#         # course_id = request.args.get('course_id')
-#         course_id = request.json['course_id']
-#         is_valid = is_course_id_valid(course_id)
-#         return {'valid': is_valid}, 202

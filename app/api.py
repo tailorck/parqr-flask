@@ -9,10 +9,13 @@ from flask_restful import Api
 
 from app.exception import InvalidUsage, to_dict
 from app.resources import (
+    InstructorQuery,
     Query,
     Courses,
     Top_Post,
-    Course_Enrolled
+    CourseEnrolled,
+    CoursesCourseID
+
 )
 from app import app
 import awsgi
@@ -21,13 +24,13 @@ api_endpoint = '/Parqr-API'
 api = Api(app)
 
 api.add_resource(Courses, api_endpoint + '/courses')
-# api.add_resource(Course_Stat, api_endpoint + '/courses/<string:course_id>')
-api.add_resource(Course_Enrolled, api_endpoint + '/courses/<string:course_id>/enrolled')
+api.add_resource(CoursesCourseID, api_endpoint + '/courses/<string:course_id>')
+api.add_resource(CourseEnrolled, api_endpoint + '/course/<string:course_id>/active')
 # api.add_resource(Course_Supported, api_endpoint + '/courses/<string:course_id>/supported')
 # api.add_resource(Course_Valid, api_endpoint + '/courses/<string:course_id>/valid')
 # api.add_resource(Events, api_endpoint + '/events')
-# api.add_resource(Instructor_Query, api_endpoint + '/query/instructor')
-api.add_resource(Query, api_endpoint + '/similar_posts')
+api.add_resource(InstructorQuery, api_endpoint + '/courses/{course_id}/query/instructor')
+api.add_resource(Query, api_endpoint + '/courses/{course_id}/query/student')
 api.add_resource(Top_Post, api_endpoint + '/top_post/<string:course_id>/<string:user>')
 # api.add_resource(Users, api_endpoint + '/users')
 # api.add_resource(Feedbacks, api_endpoint + '/feedbacks')
