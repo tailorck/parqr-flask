@@ -12,7 +12,7 @@ from app.resources.event import Event
 from app.resources.query import StudentQuery, InstructorQuery
 from app.resources.recommendations import StudentRecommendations, InstructorRecommendations
 from app.resources.user import Users
-from app.resources.feedback import Feedback
+from app.resources.feedback import Feedbacks
 from app.exception import InvalidUsage, to_dict
 from app import app
 import awsgi
@@ -38,7 +38,7 @@ api.add_resource(StudentRecommendations, api_endpoint + '/course/<string:course_
 api.add_resource(InstructorRecommendations, api_endpoint + '/course/<string:course_id>/recommendation/instructor')
 
 api.add_resource(Event, api_endpoint + '/event')
-api.add_resource(Feedback, api_endpoint + '/feedback')
+api.add_resource(Feedbacks, api_endpoint + '/feedback')
 
 api.add_resource(Users, api_endpoint + '/users')
 

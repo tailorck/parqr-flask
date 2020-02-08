@@ -76,7 +76,7 @@ class ActiveCourse(Resource):
         instructor registers the class
         :return:
         """
-        print('Registering new course: {}'.format(cid))
+        print('Registering new course: {}'.format(course_id))
         valid_course_id = False
         for course in self.enrolled_courses:
             if course.get('course_id') == course_id:

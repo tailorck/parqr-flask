@@ -37,9 +37,19 @@ class StudentQuery(Resource):
         )
         similar_posts = json.loads(response['Payload'].read().decode("utf-8"))
 
-        if feedback.requires_feedback():
-            query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
-            similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
+        feedback_payload = {
+            "source": "query",
+            "course_id": course_id,
+            "query": query,
+            "similar_posts": similar_posts
+        }
+
+        response = lambda_client.invoke(
+            FunctionName='Feedbacks',
+            InvocationType='RequestResponse',
+            Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
+        )
+        similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
 
         return similar_posts, 200
 
