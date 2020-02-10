@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 from flask import jsonify, make_response, request
-from flask_cors import CORS
 from flask_restful import Api, request, abort
 from app.resources.course import (
     CoursesList,
@@ -41,8 +40,6 @@ api.add_resource(Event, api_endpoint + '/event')
 api.add_resource(Feedbacks, api_endpoint + '/feedback')
 
 api.add_resource(Users, api_endpoint + '/users')
-
-CORS(app)
 
 
 @app.errorhandler(404)

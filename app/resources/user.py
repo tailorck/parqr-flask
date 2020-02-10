@@ -1,9 +1,10 @@
 from flask_restful import Resource
 
+
 class Users(Resource):
 
     def post(self):
-        return {"message": "user servie currently disable"}, 500
+        return {"message": "user service currently disable"}, 500
 
         # TODO: Fix this
         # username = request.json.get('username')
