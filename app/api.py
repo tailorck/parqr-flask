@@ -23,23 +23,23 @@ class CustomApi(Api):
         abort(e.code, str(e))
 
 
-api_endpoint = '/api/v2.0'
+api_endpoint = '/'
 api = CustomApi(app)
 
-api.add_resource(CoursesList, api_endpoint + '/courses')
-api.add_resource(FindCourseByCourseID, api_endpoint + '/course/<string:course_id>')
-api.add_resource(ActiveCourse, api_endpoint + '/course/<string:course_id>/active')
+api.add_resource(CoursesList, api_endpoint + 'courses')
+api.add_resource(FindCourseByCourseID, api_endpoint + 'course/<string:course_id>')
+api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active')
 
-api.add_resource(StudentQuery, api_endpoint + '/course/<string:course_id>/query/student')
-api.add_resource(InstructorQuery, api_endpoint + '/course/<string:course_id>/query/instructor')
+api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
+api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
 
-api.add_resource(StudentRecommendations, api_endpoint + '/course/<string:course_id>/recommendation/student')
-api.add_resource(InstructorRecommendations, api_endpoint + '/course/<string:course_id>/recommendation/instructor')
+api.add_resource(StudentRecommendations, api_endpoint + 'course/<string:course_id>/recommendation/student')
+api.add_resource(InstructorRecommendations, api_endpoint + 'course/<string:course_id>/recommendation/instructor')
 
-api.add_resource(Event, api_endpoint + '/event')
-api.add_resource(Feedbacks, api_endpoint + '/feedback')
+api.add_resource(Event, api_endpoint + 'event')
+api.add_resource(Feedbacks, api_endpoint + 'feedback')
 
-api.add_resource(Users, api_endpoint + '/users')
+api.add_resource(Users, api_endpoint + 'users')
 
 
 @app.errorhandler(404)

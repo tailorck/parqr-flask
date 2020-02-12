@@ -1,34 +1,38 @@
 import json
 import time
 
+import boto3
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
 from flask import jsonify, request
-import boto3
-
-from app.utils import read_credentials
-from piazza_api import Piazza
 
 
-# TODO: Send a request to Parser
 def get_enrolled_courses_from_piazza():
-    piazza = Piazza()
-    email, password = read_credentials()
-    piazza.user_login(email, password)
-    enrolled_courses = piazza.get_user_classes()
-    return enrolled_courses
+    lambda_client = boto3.client('lambda')
+    payload = {
+        "source": "parqr-api"
+    }
+    response = lambda_client.invoke(
+        FunctionName='Parser:PROD',
+        InvocationType='RequestResponse',
+        Payload=bytes(json.dumps(payload), encoding='utf8')
+    )
+    return json.loads(response['Payload'].read().decode("utf-8"))
 
 
 def mark_active_courses(course_list):
     events = boto3.client('events')
 
     for course in course_list:
-        response = events.describe_rule(
-            Name=course.get('course_id')
-        )
-        if response.get('State') == 'ENABLED':
-            course['active'] = True
-        else:
+        try:
+            response = events.describe_rule(
+                Name=course.get('course_id')
+            )
+            if response.get('State') == 'ENABLED':
+                course['active'] = True
+            else:
+                course['active'] = False
+        except events.exceptions.ResourceNotFoundException:
             course['active'] = False
 
     return course_list
@@ -40,7 +44,7 @@ class CoursesList(Resource):
         self.enrolled_courses = get_enrolled_courses_from_piazza()
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
 
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         arg_parser = reqparse.RequestParser()
         arg_parser.add_argument('active', type=bool)
@@ -58,7 +62,7 @@ class ActiveCourse(Resource):
         self.enrolled_courses = get_enrolled_courses_from_piazza()
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
 
-    @jwt_required()
+    # @jwt_required()
     def get(self, course_id):
         active_course = None
         for course in self.enrolled_courses:
@@ -70,7 +74,7 @@ class ActiveCourse(Resource):
 
         return active_course, 200
 
-    @jwt_required()
+    # @jwt_required()
     def post(self, course_id):
         """
         instructor registers the class
@@ -82,7 +86,7 @@ class ActiveCourse(Resource):
         for course in self.enrolled_courses:
             if course.get('course_id') == course_id:
                 valid_course_id = True
-                course_info = " ".join([course.get("term"), course.get("number"), course.get('name')])
+                course_info = " ".join([course.get("term"), course.get("course_num"), course.get('name')])
                 break
 
         if not valid_course_id:
@@ -132,7 +136,7 @@ class ActiveCourse(Resource):
             print("Error putting cloudwatch event target")
             return {'message': 'Internal Server Error'}, 500
 
-    @jwt_required()
+    # @jwt_required()
     def delete(self, course_id):
         print('Deregistering course: {}'.format(course_id))
 

@@ -173,6 +173,9 @@ def get_stud_att_needed_posts(course_id, num_posts):
                          Attr("created").gt(max_age_date)
     ).get("Items")
 
+    if len(filtered_posts) == 0:
+        return []
+
     def _create_top_post(post):
         post_data = {"title": post["subject"], "post_id": int(post["post_id"])}
 
@@ -204,9 +207,11 @@ def get_stud_att_needed_posts(course_id, num_posts):
         x = x + 1
         return x / (x.max() - x.min())
 
+    print(filtered_posts)
     posts_df = _posts_bqs_to_df(filtered_posts)
     posts_df.created = posts_df.created.fillna(posts_df.created.min())
     posts_age = (now - posts_df.created)
+    print(now, posts_df.created, posts_age)
     posts_df['norm_created'] = _sigmoid(posts_age.dt.days,
                                         POST_AGE_SIGMOID_OFFSET, True)
     posts_df['norm_num_followups'] = _min_max_norm(posts_df.num_followups)

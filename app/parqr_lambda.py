@@ -120,8 +120,8 @@ class Parqr(object):
 
             score = final_scores.loc[pid][0]
             subject = post["subject"]
-            s_answer = True if post["s_answer"] is not None else False
-            i_answer = True if post["i_answer"] is not None else False
+            s_answer = True if post.get("s_answer") is not None else False
+            i_answer = True if post.get("i_answer") is not None else False
 
             if score > SCORE_THRESHOLD:
                 top_posts[score] = {'pid': pid,

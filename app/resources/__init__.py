@@ -1,7 +1,3 @@
-from app.resources.query import Query, InstructorQuery
-from app.resources.recommendations import Top_Post
-from app.resources.course import Courses, CourseEnrolled, CoursesCourseID
-
 course = {
     "type": "object",
     "properties": {

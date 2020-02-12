@@ -315,6 +315,9 @@ def lambda_handler(event, context):
     print("Context: {}".format(context))
     if event.get("source") == 'aws.events':
         course_id = event.get("resources")[0].split('/')[1]
+    elif event.get("source") == "parqr-api":
+        parser = Parser()
+        return parser.get_enrolled_courses()
     else:
         course_id = event['course_id']
     print("Course ID: {}".format(course_id))
