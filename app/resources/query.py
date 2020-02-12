@@ -37,19 +37,19 @@ class StudentQuery(Resource):
         )
         similar_posts = json.loads(response['Payload'].read().decode("utf-8"))
 
-        feedback_payload = {
-            "source": "query",
-            "course_id": course_id,
-            "query": query,
-            "similar_posts": similar_posts
-        }
-
-        response = lambda_client.invoke(
-            FunctionName='Feedbacks',
-            InvocationType='RequestResponse',
-            Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
-        )
-        similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
+        # feedback_payload = {
+        #     "source": "query",
+        #     "course_id": course_id,
+        #     "query": query,
+        #     "similar_posts": similar_posts
+        # }
+        #
+        # response = lambda_client.invoke(
+        #     FunctionName='Feedbacks',
+        #     InvocationType='RequestResponse',
+        #     Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
+        # )
+        # similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
 
         return similar_posts, 200
 
@@ -66,23 +66,23 @@ class InstructorQuery(Resource):
         query = request.json['query']
 
         response = defaultdict(list)
-        for rel_course_id in related_courses[course_id]:
-            # if not Course.objects(course_id=rel_course_id):
-            #     continue
-
-            # TODO: Get recommendations from parqr service
-            # recs = parqr.get_recommendations(rel_course_id, query, 5)
-            recs_post_ids = [rec['pid'] for rec in recs.values()]
-            # recommended_posts = Post.objects(course_id=rel_course_id,
-            #                                  post_id__in=recs_post_ids)
-
-            # for post in recommended_posts:
-            #     if post.i_answer is not None:
-            #         response[rel_course_id].append({
-            #             "post_id": post.post_id,
-            #             "student_subject": post.subject,
-            #             "student_post": post.body,
-            #             "instructor_answer": post.i_answer
-            #         })
+        # for rel_course_id in related_courses[course_id]:
+        #     if not Course.objects(course_id=rel_course_id):
+        #         continue
+        #
+        #     TODO: Get recommendations from parqr service
+        #     recs = parqr.get_recommendations(rel_course_id, query, 5)
+        #     recs_post_ids = [rec['pid'] for rec in recs.values()]
+        #     recommended_posts = Post.objects(course_id=rel_course_id,
+        #                                      post_id__in=recs_post_ids)
+        #
+        #     for post in recommended_posts:
+        #         if post.i_answer is not None:
+        #             response[rel_course_id].append({
+        #                 "post_id": post.post_id,
+        #                 "student_subject": post.subject,
+        #                 "student_post": post.body,
+        #                 "instructor_answer": post.i_answer
+        #             })
 
         return response

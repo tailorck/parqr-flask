@@ -37,7 +37,7 @@ def mark_active_courses(course_list):
 class CoursesList(Resource):
 
     def __init__(self):
-        self.enrolled_courses = parser.get_enrolled_courses()
+        self.enrolled_courses = get_enrolled_courses_from_piazza()
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
 
     @jwt_required()
@@ -55,7 +55,7 @@ class CoursesList(Resource):
 class ActiveCourse(Resource):
 
     def __init__(self):
-        self.enrolled_courses = parser.get_enrolled_courses()
+        self.enrolled_courses = get_enrolled_courses_from_piazza()
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
 
     @jwt_required()
@@ -78,9 +78,12 @@ class ActiveCourse(Resource):
         """
         print('Registering new course: {}'.format(course_id))
         valid_course_id = False
+        course_info = ""
         for course in self.enrolled_courses:
             if course.get('course_id') == course_id:
                 valid_course_id = True
+                course_info = " ".join([course.get("term"), course.get("number"), course.get('name')])
+                break
 
         if not valid_course_id:
             return {'message': 'PARQR is not enrolled in course with id {}'.format(course_id)}, 409
@@ -90,7 +93,8 @@ class ActiveCourse(Resource):
         rule_arn = cloudwatch_events.put_rule(
             Name=course_id,
             ScheduleExpression='rate(15 minutes)',
-            State='ENABLED'
+            State='ENABLED',
+            Description=course_info
         ).get('RuleArn')
 
         if not rule_arn:
