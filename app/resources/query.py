@@ -6,9 +6,12 @@ import boto3
 
 from app.extensions import feedback
 
-lambda_client = boto3.client('lambda')
 
-with open('related_courses.json') as f:
+def get_boto3_lambda():
+    return boto3.client('lambda')
+
+
+with open('../related_courses.json') as f:
     related_courses = json.load(f)
 
 
@@ -30,6 +33,7 @@ class StudentQuery(Resource):
             "N": 5
         }
         print(payload)
+        lambda_client = get_boto3_lambda()
         response = lambda_client.invoke(
             FunctionName='Parqr',
             InvocationType='RequestResponse',

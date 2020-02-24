@@ -3,12 +3,21 @@ import time
 
 import boto3
 from flask_restful import Resource, reqparse
-from flask_jwt import jwt_required
+# from flask_jwt import jwt_required
 from flask import jsonify, request
 
 
+def get_boto3_events():
+    return boto3.client('events')
+
+
+def get_boto3_lambda():
+    return boto3.client('lambda')
+
+
 def get_enrolled_courses_from_piazza():
-    lambda_client = boto3.client('lambda')
+    lambda_client = get_boto3_lambda()
+
     payload = {
         "source": "parqr-api"
     }
@@ -21,7 +30,7 @@ def get_enrolled_courses_from_piazza():
 
 
 def mark_active_courses(course_list):
-    events = boto3.client('events')
+    events = get_boto3_events()
 
     for course in course_list:
         try:
@@ -93,7 +102,7 @@ class ActiveCourse(Resource):
             return {'message': 'PARQR is not enrolled in course with id {}'.format(course_id)}, 409
 
         # Create a new event as a cloud cron job
-        cloudwatch_events = boto3.client("events")
+        cloudwatch_events = get_boto3_events()
         rule_arn = cloudwatch_events.put_rule(
             Name=course_id,
             ScheduleExpression='rate(15 minutes)',
@@ -106,7 +115,7 @@ class ActiveCourse(Resource):
             return {'message': 'Internal Server Error'}, 500
 
         # Create a lambda permission object so cloudwatch events can call the lambda
-        lambda_client = boto3.client('lambda')
+        lambda_client = get_boto3_lambda()
         # TODO: Inject new environment variable based upon master or dev
         lambda_response = lambda_client.add_permission(
             FunctionName='Parser:PROD',
@@ -140,7 +149,7 @@ class ActiveCourse(Resource):
     def delete(self, course_id):
         print('Deregistering course: {}'.format(course_id))
 
-        cloudwatch_events = boto3.client("events")
+        cloudwatch_events = get_boto3_events()
         cloudwatch_events.disable_rule(
             Name=course_id
         )
