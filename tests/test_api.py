@@ -1,244 +1,529 @@
-from collections import namedtuple
-import time
+import unittest
+import os
+from app import api
+import mock
+import boto3
 import json
-
-from mock import patch, call
-import pytest
+from decimal import Decimal
 
 
-@pytest.fixture
-def Post():
-    from app.models import post
-    post.drop_collection()
-    return post
+class TestHelloWorldAPI(unittest.TestCase):
+    HELLO_WORLD_EVENT = {
+        'body': '{\r\n'
+                '  "event_type": "event",\r\n'
+                '  "user_id": 867481538782578,\r\n'
+                '  "course_id": "jze974ouf142qb",\r\n'
+                '  "event_data": "data"\r\n'
+                '}',
+        'headers': {'Accept': '*/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                    'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                    'Postman-Token': 'd72e00cd-7120-484e-99da-3694563d05ed',
+                    'User-Agent': 'PostmanRuntime/7.22.0',
+                    'X-Amzn-Trace-Id': 'Root=1-5e530337-ab17dec010055300514885c0',
+                    'X-Forwarded-For': '128.61.2.250',
+                    'X-Forwarded-Port': '443',
+                    'X-Forwarded-Proto': 'https'},
+        'httpMethod': 'GET',
+        'isBase64Encoded': False,
+        'multiValueHeaders': {'Accept': ['*/*'],
+                              'Accept-Encoding': ['gzip, deflate, br'],
+                              'Cache-Control': ['no-cache'],
+                              'Content-Type': ['application/json'],
+                              'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                              'Postman-Token': ['d72e00cd-7120-484e-99da-3694563d05ed'],
+                              'User-Agent': ['PostmanRuntime/7.22.0'],
+                              'X-Amzn-Trace-Id': ['Root=1-5e530337-ab17dec010055300514885c0'],
+                              'X-Forwarded-For': ['128.61.2.250'],
+                              'X-Forwarded-Port': ['443'],
+                              'X-Forwarded-Proto': ['https']},
+        'multiValueQueryStringParameters': None,
+        'path': '/',
+        'pathParameters': None,
+        'queryStringParameters': None,
+        'requestContext': {'accountId': '095551794161',
+                           'apiId': '7uzke7qgw3',
+                           'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                           'domainPrefix': '7uzke7qgw3',
+                           'extendedRequestId': 'IX1wrHVuiYcF0Wg=',
+                           'httpMethod': 'GET',
+                           'identity': {'accessKey': None,
+                                        'accountId': None,
+                                        'caller': None,
+                                        'cognitoAuthenticationProvider': None,
+                                        'cognitoAuthenticationType': None,
+                                        'cognitoIdentityId': None,
+                                        'cognitoIdentityPoolId': None,
+                                        'principalOrgId': None,
+                                        'sourceIp': '128.61.2.250',
+                                        'user': None,
+                                        'userAgent': 'PostmanRuntime/7.22.0',
+                                        'userArn': None},
+                           'path': '/v2/',
+                           'protocol': 'HTTP/1.1',
+                           'requestId': '73c554f8-de97-4661-8dfa-21976a281c0b',
+                           'requestTime': '23/Feb/2020:22:56:55 +0000',
+                           'requestTimeEpoch': 1582498615468,
+                           'resourceId': '9082ewim44',
+                           'resourcePath': '/',
+                           'stage': 'v2'},
+        'resource': '/',
+        'stageVariables': None}
+    CONTEXT = {}
+
+    HELLO_WORLD_RESPONSE = {'statusCode': '200',
+                            'headers': {'Content-Type': 'text/html; charset=utf-8',
+                                        'Content-Length': '13'},
+                            'isBase64Encoded': False,
+                            'body': 'Hello, World!'}
+
+    def test_hello_world(self):
+        response = api.lambda_handler(TestHelloWorldAPI.HELLO_WORLD_EVENT, TestHelloWorldAPI.CONTEXT)
+
+        assert TestHelloWorldAPI.HELLO_WORLD_RESPONSE == response
 
 
-@pytest.fixture
-def Course():
-    from app.models import course
-    course.drop_collection()
-    return course
+def mock_mark_active_courses(courses):
+    return json.loads('[{"active": true, "course_id": "j8rf9vx65vl23t", "course_num": "CS '
+                      '007", "name": "Parqr Test Course", "term": "Fall 2017"}]')
 
 
-@pytest.fixture
-def dummy_db(client):
-    payload = dict(course_id='j8rf9vx65vl23t')
-    client.post('/api/course', data=json.dumps(payload),
-                content_type='application/json')
-    time.sleep(3)
-
-@pytest.fixture
-def dummy_jobs():
-    Job = namedtuple('Job', ['id'])
-    return [Job('job_id1'), Job('job_id2')]
-
-
-@patch('app.api.get_unique_users')
-@patch('app.api.number_posts_prevented')
-@patch('app.api.total_posts_in_course')
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_get_parqr_stats(mock_total_posts, mock_prevented_posts,
-                         mock_unique_users, client):
-    course_id = 'j8rf9vx65vl23t'
-    start_time = 1524417360
-    endpoint = '/api/class/{cid}/usage?start_time={time}'.format(cid=course_id,
-                                                                 time=start_time)
-
-    mock_unique_users.return_value = 50
-    mock_prevented_posts.return_value = 20
-    mock_total_posts.return_value = 600
-    resp = client.get(endpoint)
-    json_resp = json.loads(resp.data)
-
-    mock_unique_users.assert_called_with(course_id, start_time)
-    mock_prevented_posts.assert_called_with(course_id, start_time)
-    mock_total_posts.assert_called_with(course_id, start_time)
-
-    assert resp.status_code == 202
-    assert json_resp['usingParqr'] == 50
-    assert json_resp['assistedCount'] == 20
-    assert json_resp['percentTrafficReduced'] == (20 / float(600 + 20)) * 100
+def mock_get_enrolled_courses_from_piazza():
+    mock_boto3 = mock.Mock()
+    mock_response_body = mock.Mock()
+    mock_encoded_body = mock.Mock()
+    mock_encoded_body.decode.return_value = '[{"course_id": "j8rf9vx65vl23t", "course_num": "CS ' \
+                                            '007", "name": "Parqr Test Course", "term": "Fall 2017"}] '
+    mock_response_body.read.return_value = mock_encoded_body
+    mock_boto3.invoke.return_value = {
+        'Payload': mock_response_body
+    }
+    return mock_boto3
 
 
-@patch('app.api.get_top_attention_warranted_posts')
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_get_top_posts(mock_top_posts, client):
-    course_id = 'j8rf9vx65vl23t'
-    num_posts = 10
-    endpoint = '/api/class/{cid}/attentionposts?num_posts={num_posts}'.format(cid=course_id,
-                                                            num_posts=num_posts)
+class TestCoursesAPI(unittest.TestCase):
+    COURSES_EVENT = {'body': '{}',
+                     'headers': {'Accept': '*/*',
+                                 'Accept-Encoding': 'gzip, deflate, br',
+                                 'Cache-Control': 'no-cache',
+                                 'Content-Type': 'application/json',
+                                 'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                                 'Postman-Token': '8b57a10f-7171-4f41-a5e5-dbdf1bf19bd5',
+                                 'User-Agent': 'PostmanRuntime/7.22.0',
+                                 'X-Amzn-Trace-Id': 'Root=1-5e53204a-d4157a694ddf9c5daec88e26',
+                                 'X-Forwarded-For': '128.61.2.250',
+                                 'X-Forwarded-Port': '443',
+                                 'X-Forwarded-Proto': 'https'},
+                     'httpMethod': 'GET',
+                     'isBase64Encoded': False,
+                     'multiValueHeaders': {'Accept': ['*/*'],
+                                           'Accept-Encoding': ['gzip, deflate, br'],
+                                           'Cache-Control': ['no-cache'],
+                                           'Content-Type': ['application/json'],
+                                           'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                                           'Postman-Token': ['8b57a10f-7171-4f41-a5e5-dbdf1bf19bd5'],
+                                           'User-Agent': ['PostmanRuntime/7.22.0'],
+                                           'X-Amzn-Trace-Id': ['Root=1-5e53204a-d4157a694ddf9c5daec88e26'],
+                                           'X-Forwarded-For': ['128.61.2.250'],
+                                           'X-Forwarded-Port': ['443'],
+                                           'X-Forwarded-Proto': ['https']},
+                     'multiValueQueryStringParameters': None,
+                     'path': '/courses',
+                     'pathParameters': {'proxy': 'courses'},
+                     'queryStringParameters': None,
+                     'requestContext': {'accountId': '095551794161',
+                                        'apiId': '7uzke7qgw3',
+                                        'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                                        'domainPrefix': '7uzke7qgw3',
+                                        'extendedRequestId': 'IYH7sFFUCYcFS_A=',
+                                        'httpMethod': 'GET',
+                                        'identity': {'accessKey': None,
+                                                     'accountId': None,
+                                                     'caller': None,
+                                                     'cognitoAuthenticationProvider': None,
+                                                     'cognitoAuthenticationType': None,
+                                                     'cognitoIdentityId': None,
+                                                     'cognitoIdentityPoolId': None,
+                                                     'principalOrgId': None,
+                                                     'sourceIp': '128.61.2.250',
+                                                     'user': None,
+                                                     'userAgent': 'PostmanRuntime/7.22.0',
+                                                     'userArn': None},
+                                        'path': '/v2/courses',
+                                        'protocol': 'HTTP/1.1',
+                                        'requestId': 'd8b68246-e9cb-4a44-8d71-bb3a103012c4',
+                                        'requestTime': '24/Feb/2020:01:00:58 +0000',
+                                        'requestTimeEpoch': 1582506058778,
+                                        'resourceId': 'ycv30v',
+                                        'resourcePath': '/{proxy+}',
+                                        'stage': 'v2'},
+                     'resource': '/{proxy+}',
+                     'stageVariables': None}
+    CONTEXT = {}
 
-    post_properties = [ '5 unresolved followups', '120 views',
-                        '3 good questions', 'No instructor answer']
-    result = [
-        {
-            "pid"       :  295,
-            "title"     :  "Help with Minimax",
-            "properties":  post_properties
-        },
+    COURSES_RESPONSE = {
+        'body': '[\n'
+                '  {\n'
+                '    "active": true, \n'
+                '    "course_id": "j8rf9vx65vl23t", \n'
+                '    "course_num": "CS 007", \n'
+                '    "name": "Parqr Test Course", \n'
+                '    "term": "Fall 2017"\n'
+                '  }\n'
+                ']\n',
+        'headers': {'Content-Length': '156', 'Content-Type': 'application/json'},
+        'isBase64Encoded': False,
+        'statusCode': '200'}
 
-        {
-            "pid"       : 300,
-            "title"     : "Markov Decision Processes Challenge",
-            "properties": post_properties
-        }
-    ]
-
-    mock_top_posts.return_value = result
-    resp = client.get(endpoint)
-    json_resp = json.loads(resp.data)
-    mock_top_posts.assert_called_with(course_id, num_posts)
-
-    assert resp.status_code == 202
-    assert json_resp['posts'] == result
-
-
-@patch('app.api.is_course_id_valid')
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_get_course_isvalid(mock_is_valid_cid, client):
-    course_id = 'j8rf9vx65vl23t'
-    endpoint = '/api/class/isvalid?course_id={cid}'.format(cid=course_id)
-
-    mock_is_valid_cid.return_value = False
-    resp = client.get(endpoint)
-    json_resp = json.loads(resp.data)
-    mock_is_valid_cid.assert_called_with(course_id)
-
-    assert resp.status_code == 202
-    assert json_resp['valid'] == False
-
-
-@patch('app.api.scheduler')
-@patch('app.api.redis')
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_register_class(mock_redis, mock_scheduler, client, dummy_jobs):
-    endpoint = '/api/class'
-    course_id = 'j8rf9vx65vl23t'
-    payload = dict(course_id=course_id)
-
-    # case 1: cid does not exist, register cid
-    mock_redis.exists.return_value = False
-    mock_scheduler.schedule.side_effect = dummy_jobs
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    json_resp = json.loads(resp.data)
-    mock_redis.set.assert_called_with(course_id,
-                                      ','.join([job.id for job in dummy_jobs]))
-    assert resp.status_code == 200
-    assert json_resp['course_id'] == course_id
-    assert mock_scheduler.schedule.call_count == 2
-
-    # case 2: cid exists, do not register cid
-    mock_redis.reset_mock()
-    mock_scheduler.reset_mock()
-    mock_redis.exists.return_value = True
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert resp.status_code == 500
-    assert mock_scheduler.schedule.call_count == 0
-
-
-@patch('app.api.scheduler')
-@patch('app.api.redis')
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_deregister_class(mock_redis, mock_scheduler, client, dummy_jobs):
-    endpoint = '/api/class'
-    course_id = 'j8rf9vx65vl23t'
-    payload = dict(course_id=course_id)
-
-    # case 1: cid exists, deregister cid
-    mock_redis.exists.return_value = True
-    mock_redis.get.return_value = ','.join([job.id for job in dummy_jobs])
-    mock_scheduler.get_jobs.return_value = dummy_jobs
-
-    resp = client.delete(endpoint, data=json.dumps(payload),
-                         content_type='application/json')
-    json_resp = json.loads(resp.data)
-
-    calls = [call(job) for job in dummy_jobs]
-    mock_redis.get.assert_called_with(course_id)
-    mock_scheduler.cancel.assert_has_calls(calls)
-    mock_redis.delete.assert_called_with(course_id)
-    assert resp.status_code == 200
-
-    # case 2: cid does not exist, catch exception
-    mock_redis.reset_mock()
-    mock_scheduler.reset_mock()
-    mock_redis.exists.return_value = False
-    resp = client.delete(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert resp.status_code == 500
-    assert mock_scheduler.cancel.call_count == 0
-    assert mock_redis.delete.call_count == 0
-
-# The order of these tests is important. test_update_course must come before
-# test_similar_posts
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_update_course(client, Post, Course):
-    Post.objects(course_id='j8rf9vx65vl23t').delete()
-    Course.objects(cid='j8rf9vx65vl23t').delete()
-
-    endpoint = '/api/course'
-
-    # test empty body, no content-type
-    resp = client.post(endpoint)
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == 'No request body provided'
-
-    # test empty body, valid content-type
-    resp = client.post(endpoint, content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == 'No request body provided'
-
-    # test valid course_id
-    payload = dict(course_id='j8rf9vx65vl23t')
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    time.sleep(3)
-    json_resp = json.loads(resp.data)
-    assert json_resp['course_id'] == 'j8rf9vx65vl23t'
-    assert Course.objects().first().cid == 'j8rf9vx65vl23t'
-    assert len(Post.objects()) != 0
+    @mock.patch('app.resources.course.mark_active_courses', side_effect=mock_mark_active_courses)
+    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    def test_get(self, mock_mark_active_courses_function, mock_boto_function):
+        response = api.lambda_handler(TestCoursesAPI.COURSES_EVENT, TestCoursesAPI.CONTEXT)
+        assert TestCoursesAPI.COURSES_RESPONSE == response
 
 
-@pytest.mark.skip(reason='Need to mock out database and queue interactions')
-def test_similar_posts(client, Post, Course, dummy_db):
-    endpoint = '/api/similar_posts'
+class TestCourseAPI(unittest.TestCase):
+    COURSE_GET_EVENT = {
+        'body': '{}',
+        'headers': {'Accept': '*/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                    'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                    'Postman-Token': 'ca2a6232-b381-4811-957e-298c53d01674',
+                    'User-Agent': 'PostmanRuntime/7.22.0',
+                    'X-Amzn-Trace-Id': 'Root=1-5e5419d9-f2749846d105935160391b59',
+                    'X-Forwarded-For': '128.61.5.213',
+                    'X-Forwarded-Port': '443',
+                    'X-Forwarded-Proto': 'https'},
+        'httpMethod': 'GET',
+        'isBase64Encoded': False,
+        'multiValueHeaders': {'Accept': ['*/*'],
+                              'Accept-Encoding': ['gzip, deflate, br'],
+                              'Cache-Control': ['no-cache'],
+                              'Content-Type': ['application/json'],
+                              'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                              'Postman-Token': ['ca2a6232-b381-4811-957e-298c53d01674'],
+                              'User-Agent': ['PostmanRuntime/7.22.0'],
+                              'X-Amzn-Trace-Id': ['Root=1-5e5419d9-f2749846d105935160391b59'],
+                              'X-Forwarded-For': ['128.61.5.213'],
+                              'X-Forwarded-Port': ['443'],
+                              'X-Forwarded-Proto': ['https']},
+        'multiValueQueryStringParameters': None,
+        'path': '/course/j8rf9vx65vl23t',
+        'pathParameters': {'proxy': 'course/j8rf9vx65vl23t'},
+        'queryStringParameters': None,
+        'requestContext': {'accountId': '095551794161',
+                           'apiId': '7uzke7qgw3',
+                           'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                           'domainPrefix': '7uzke7qgw3',
+                           'extendedRequestId': 'Iaj59F6ZCYcFSxA=',
+                           'httpMethod': 'GET',
+                           'identity': {'accessKey': None,
+                                        'accountId': None,
+                                        'caller': None,
+                                        'cognitoAuthenticationProvider': None,
+                                        'cognitoAuthenticationType': None,
+                                        'cognitoIdentityId': None,
+                                        'cognitoIdentityPoolId': None,
+                                        'principalOrgId': None,
+                                        'sourceIp': '128.61.5.213',
+                                        'user': None,
+                                        'userAgent': 'PostmanRuntime/7.22.0',
+                                        'userArn': None},
+                           'path': '/v2/course/j8rf9vx65vl23t',
+                           'protocol': 'HTTP/1.1',
+                           'requestId': 'd00afb81-a3dd-41e5-b880-d9b9af08bed3',
+                           'requestTime': '24/Feb/2020:18:45:45 +0000',
+                           'requestTimeEpoch': 1582569945217,
+                           'resourceId': 'ycv30v',
+                           'resourcePath': '/{proxy+}',
+                           'stage': 'v2'},
+        'resource': '/{proxy+}',
+        'stageVariables': None}
+    CONTEXT = {}
 
-    # test empty body, no content-type
-    resp = client.post(endpoint)
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == 'No request body provided'
+    COURSE_GET_RESPONSE = {
+        'statusCode': '200',
+        'headers': {
+            'Content-Type': 'application/json',
+            'Content-Length': '106'},
+        'isBase64Encoded': False,
+        'body': '{"course_id": "j8rf9vx65vl23t", "course_num": "CS 007", "name": "Parqr Test '
+                'Course", "term": "Fall 2017"}\n'}
 
-    # test empty body valid content-type
-    resp = client.post(endpoint, content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == 'No request body provided'
+    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    def test_get(self, mock_get_enrolled_courses_from_piazza_function):
+        response = api.lambda_handler(TestCourseAPI.COURSE_GET_EVENT, TestCourseAPI.CONTEXT)
+        assert TestCourseAPI.COURSE_GET_RESPONSE == response
 
-    # test valid N, no cid, valid query
-    payload = dict(N=5, query='minimax')
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == "u'course_id' is a required property"
 
-    # test valid N, valid cid, no query
-    payload = dict(N=3, course_id='j8rf9vx65vl23t')
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    json_resp = json.loads(resp.data)
-    assert json_resp['message'] == "u'query' is a required property"
+class TestActiveCourseAPI(unittest.TestCase):
+    COURSE_GET_EVENT = {
+        'body': '{}',
+        'headers': {'Accept': '*/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                    'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                    'Postman-Token': '2d82ea78-81e9-4342-b6e2-49b9d2ed26da',
+                    'User-Agent': 'PostmanRuntime/7.22.0',
+                    'X-Amzn-Trace-Id': 'Root=1-5e5443b8-eb16a35c33dc0bbc9cec9798',
+                    'X-Forwarded-For': '128.61.5.213',
+                    'X-Forwarded-Port': '443',
+                    'X-Forwarded-Proto': 'https'},
+        'httpMethod': 'GET',
+        'isBase64Encoded': False,
+        'multiValueHeaders': {'Accept': ['*/*'],
+                              'Accept-Encoding': ['gzip, deflate, br'],
+                              'Cache-Control': ['no-cache'],
+                              'Content-Type': ['application/json'],
+                              'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                              'Postman-Token': ['2d82ea78-81e9-4342-b6e2-49b9d2ed26da'],
+                              'User-Agent': ['PostmanRuntime/7.22.0'],
+                              'X-Amzn-Trace-Id': ['Root=1-5e5443b8-eb16a35c33dc0bbc9cec9798'],
+                              'X-Forwarded-For': ['128.61.5.213'],
+                              'X-Forwarded-Port': ['443'],
+                              'X-Forwarded-Proto': ['https']},
+        'multiValueQueryStringParameters': None,
+        'path': '/courses',
+        'pathParameters': {'proxy': 'courses'},
+        'queryStringParameters': None,
+        'requestContext': {'accountId': '095551794161',
+                           'apiId': '7uzke7qgw3',
+                           'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                           'domainPrefix': '7uzke7qgw3',
+                           'extendedRequestId': 'Ia-E3FmyCYcFnTw=',
+                           'httpMethod': 'GET',
+                           'identity': {'accessKey': None,
+                                        'accountId': None,
+                                        'caller': None,
+                                        'cognitoAuthenticationProvider': None,
+                                        'cognitoAuthenticationType': None,
+                                        'cognitoIdentityId': None,
+                                        'cognitoIdentityPoolId': None,
+                                        'principalOrgId': None,
+                                        'sourceIp': '128.61.5.213',
+                                        'user': None,
+                                        'userAgent': 'PostmanRuntime/7.22.0',
+                                        'userArn': None},
+                           'path': '/v2/courses',
+                           'protocol': 'HTTP/1.1',
+                           'requestId': '439a2191-6f04-4394-8917-46857942ace3',
+                           'requestTime': '24/Feb/2020:21:44:24 +0000',
+                           'requestTimeEpoch': 1582580664657,
+                           'resourceId': 'ycv30v',
+                           'resourcePath': '/{proxy+}',
+                           'stage': 'v2'},
+        'resource': '/{proxy+}',
+        'stageVariables': None}
+    CONTEXT = {}
 
-    # test valid N, valid cid, valid query
-    payload = dict(N=3, course_id='j8rf9vx65vl23t', query='minimax')
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    assert resp.status_code == 200
+    COURSE_GET_RESPONSE = {
+        'body': '[\n'
+                '  {\n'
+                '    "active": true, \n'
+                '    "course_id": "j8rf9vx65vl23t", \n'
+                '    "course_num": "CS 007", \n'
+                '    "name": "Parqr Test Course", \n'
+                '    "term": "Fall 2017"\n'
+                '  }\n'
+                ']\n',
+        'headers': {'Content-Length': '156', 'Content-Type': 'application/json'},
+        'isBase64Encoded': False,
+        'statusCode': '200'}
 
-    # test valid N, invalid cid, valid query
-    payload = dict(N=3, course_id='abc123', query='minimax')
-    resp = client.post(endpoint, data=json.dumps(payload),
-                       content_type='application/json')
-    assert resp.status_code == 400
+    @mock.patch('app.resources.course.mark_active_courses', side_effect=mock_mark_active_courses)
+    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    def test_get(self, mock_mark_active_courses_function, mock_get_enrolled_courses_from_piazza_active_function):
+        response = api.lambda_handler(TestActiveCourseAPI.COURSE_GET_EVENT, TestActiveCourseAPI.CONTEXT)
+        assert TestActiveCourseAPI.COURSE_GET_RESPONSE == response
+
+
+def mock_get_recs_from_parqr():
+    mock_boto3 = mock.Mock()
+    mock_response_body = mock.Mock()
+    mock_encoded_body = mock.Mock()
+    mock_encoded_body.decode.return_value = '{"0.1617989443268492": {"pid": 8, "subject": "alpha beta performing ' \
+                                            'better than Iterative Deepening", "s_answer": false, "i_answer": true, ' \
+                                            '"feedback": false}} '
+    mock_response_body.read.return_value = mock_encoded_body
+    mock_boto3.invoke.return_value = {
+        'Payload': mock_response_body
+    }
+    return mock_boto3
+
+
+class TestQueryStudentAPI(unittest.TestCase):
+    QUERY_EVENT = {
+        'body': '{\n\t"query": "How do I do alpha beta pruning"\n}',
+        'headers': {'Accept': '*/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                    'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                    'Postman-Token': 'a2f64f50-20a3-4e06-8871-a966f4244427',
+                    'User-Agent': 'PostmanRuntime/7.22.0',
+                    'X-Amzn-Trace-Id': 'Root=1-5e544d85-b6ac27d81f2b19d01a0c3cbc',
+                    'X-Forwarded-For': '128.61.5.213',
+                    'X-Forwarded-Port': '443',
+                    'X-Forwarded-Proto': 'https'},
+        'httpMethod': 'POST',
+        'isBase64Encoded': False,
+        'multiValueHeaders': {'Accept': ['*/*'],
+                              'Accept-Encoding': ['gzip, deflate, br'],
+                              'Cache-Control': ['no-cache'],
+                              'Content-Type': ['application/json'],
+                              'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                              'Postman-Token': ['a2f64f50-20a3-4e06-8871-a966f4244427'],
+                              'User-Agent': ['PostmanRuntime/7.22.0'],
+                              'X-Amzn-Trace-Id': ['Root=1-5e544d85-b6ac27d81f2b19d01a0c3cbc'],
+                              'X-Forwarded-For': ['128.61.5.213'],
+                              'X-Forwarded-Port': ['443'],
+                              'X-Forwarded-Proto': ['https']},
+        'multiValueQueryStringParameters': None,
+        'path': '/course/j8rf9vx65vl23t/query/student',
+        'pathParameters': {'proxy': 'course/j8rf9vx65vl23t/query/student'},
+        'queryStringParameters': None,
+        'requestContext': {'accountId': '095551794161',
+                           'apiId': '7uzke7qgw3',
+                           'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                           'domainPrefix': '7uzke7qgw3',
+                           'extendedRequestId': 'IbEM3G9iCYcF66w=',
+                           'httpMethod': 'POST',
+                           'identity': {'accessKey': None,
+                                        'accountId': None,
+                                        'caller': None,
+                                        'cognitoAuthenticationProvider': None,
+                                        'cognitoAuthenticationType': None,
+                                        'cognitoIdentityId': None,
+                                        'cognitoIdentityPoolId': None,
+                                        'principalOrgId': None,
+                                        'sourceIp': '128.61.5.213',
+                                        'user': None,
+                                        'userAgent': 'PostmanRuntime/7.22.0',
+                                        'userArn': None},
+                           'path': '/v2/course/j8rf9vx65vl23t/query/student',
+                           'protocol': 'HTTP/1.1',
+                           'requestId': '151b3984-175d-4557-ae86-f8d315f88cd5',
+                           'requestTime': '24/Feb/2020:22:26:13 +0000',
+                           'requestTimeEpoch': 1582583173457,
+                           'resourceId': 'ycv30v',
+                           'resourcePath': '/{proxy+}',
+                           'stage': 'v2'},
+        'resource': '/{proxy+}',
+        'stageVariables': None}
+    CONTEXT = {}
+
+    QUERY_RESPONSE = {'statusCode': '200',
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Content-Length': '159'},
+                      'isBase64Encoded': False,
+                      'body': '{"0.1617989443268492": {"pid": 8, "subject": "alpha beta performing better than '
+                              'Iterative Deepening", "s_answer": false, "i_answer": true, "feedback": false}}\n'}
+
+    @mock.patch('app.resources.query.get_boto3_lambda', side_effect=mock_get_recs_from_parqr)
+    def test_post(self, mock_get_recs_from_parqr_function):
+        response = api.lambda_handler(TestQueryStudentAPI.QUERY_EVENT, TestQueryStudentAPI.CONTEXT)
+        assert TestQueryStudentAPI.QUERY_RESPONSE == response
+
+
+def mock_get_posts_table():
+    mock_boto3 = mock.Mock()
+    mock_boto3.scan.return_value = {
+        "Items": [
+            {
+                'subject': 'oh henlo',
+                'post_type': 'question',
+                'num_unresolved_followups': Decimal('0'),
+                'followups': [],
+                'course_id': 'j8rf9vx65vl23t',
+                'post_id': Decimal('18'),
+                'created': Decimal('1581482976'),
+                'num_views': Decimal('2'),
+                'tags': ['hw4', 'student', 'unanswered'],
+                'body': 'wassup'
+            }
+        ]
+    }
+    return mock_boto3
+
+
+class TestStudentRecommendationAPI(unittest.TestCase):
+    QUERY_EVENT = {
+        'body': None,
+        'headers': {'Accept': '*/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                    'Host': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                    'Postman-Token': '42f2a39a-0071-4566-b98f-ebd2299b4d29',
+                    'User-Agent': 'PostmanRuntime/7.22.0',
+                    'X-Amzn-Trace-Id': 'Root=1-5e54550a-d2648054cee70ff3d96ea89c',
+                    'X-Forwarded-For': '128.61.5.213',
+                    'X-Forwarded-Port': '443',
+                    'X-Forwarded-Proto': 'https'},
+        'httpMethod': 'GET',
+        'isBase64Encoded': False,
+        'multiValueHeaders': {'Accept': ['*/*'],
+                              'Accept-Encoding': ['gzip, deflate, br'],
+                              'Cache-Control': ['no-cache'],
+                              'Content-Type': ['application/json'],
+                              'Host': ['7uzke7qgw3.execute-api.us-east-2.amazonaws.com'],
+                              'Postman-Token': ['42f2a39a-0071-4566-b98f-ebd2299b4d29'],
+                              'User-Agent': ['PostmanRuntime/7.22.0'],
+                              'X-Amzn-Trace-Id': ['Root=1-5e54550a-d2648054cee70ff3d96ea89c'],
+                              'X-Forwarded-For': ['128.61.5.213'],
+                              'X-Forwarded-Port': ['443'],
+                              'X-Forwarded-Proto': ['https']},
+        'multiValueQueryStringParameters': None,
+        'path': '/courses/j8rf9vx65vl23t/recommendation/student',
+        'pathParameters': {'proxy': 'courses/j8rf9vx65vl23t/recommendation/student'},
+        'queryStringParameters': None,
+        'requestContext': {'accountId': '095551794161',
+                           'apiId': '7uzke7qgw3',
+                           'domainName': '7uzke7qgw3.execute-api.us-east-2.amazonaws.com',
+                           'domainPrefix': '7uzke7qgw3',
+                           'extendedRequestId': 'IbI5mEYTiYcFlgQ=',
+                           'httpMethod': 'GET',
+                           'identity': {'accessKey': None,
+                                        'accountId': None,
+                                        'caller': None,
+                                        'cognitoAuthenticationProvider': None,
+                                        'cognitoAuthenticationType': None,
+                                        'cognitoIdentityId': None,
+                                        'cognitoIdentityPoolId': None,
+                                        'principalOrgId': None,
+                                        'sourceIp': '128.61.5.213',
+                                        'user': None,
+                                        'userAgent': 'PostmanRuntime/7.22.0',
+                                        'userArn': None},
+                           'path': '/v2/courses/j8rf9vx65vl23t/recommendation/student',
+                           'protocol': 'HTTP/1.1',
+                           'requestId': 'd13b7fa7-ee9f-46af-8e18-130db6c8bad9',
+                           'requestTime': '24/Feb/2020:22:58:18 +0000',
+                           'requestTimeEpoch': 1582585098193,
+                           'resourceId': 'ycv30v',
+                           'resourcePath': '/{proxy+}',
+                           'stage': 'v2'},
+        'resource': '/{proxy+}',
+        'stageVariables': None}
+    CONTEXT = {}
+
+    QUERY_RESPONSE = {
+        'statusCode': '200', 'headers': {'Content-Type': 'application/json', 'Content-Length': '159'},
+        'isBase64Encoded': False,
+        'body': '{"message": "success", "recommendations": [{"title": "oh henlo", "post_id": 18, '
+                '"properties": ["0 followups", "2 views", "Tags - hw4, student, unanswered"]}]}\n'}
+
+    @mock.patch('app.statistics.get_posts_table', side_effect=mock_get_posts_table)
+    def test_get(self, mock_get_posts_table_function):
+        response = api.lambda_handler(TestStudentRecommendationAPI.QUERY_EVENT, TestStudentRecommendationAPI.CONTEXT)
+        assert TestStudentRecommendationAPI.QUERY_RESPONSE == response
+
+
+if __name__ == "__main__":
+    unittest.main()
