@@ -11,8 +11,8 @@ def get_boto3_lambda():
     return boto3.client('lambda')
 
 
-with open('../related_courses.json') as f:
-    related_courses = json.load(f)
+# with open('../related_courses.json') as f:
+#     related_courses = json.load(f)
 
 
 class StudentQuery(Resource):
