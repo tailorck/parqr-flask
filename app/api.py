@@ -12,8 +12,8 @@ from app.resources.query import StudentQuery, InstructorQuery
 from app.resources.recommendations import StudentRecommendations, InstructorRecommendations
 from app.resources.user import Users
 from app.resources.feedback import Feedbacks
+from app.utils import create_app
 from app.exception import InvalidUsage, to_dict
-from app import app
 import awsgi
 
 
@@ -24,6 +24,7 @@ class CustomApi(Api):
 
 
 api_endpoint = '/'
+app = create_app("")
 api = CustomApi(app)
 
 api.add_resource(CoursesList, api_endpoint + 'courses')
@@ -33,8 +34,8 @@ api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active'
 api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
 api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
 
-api.add_resource(StudentRecommendations, api_endpoint + 'course/<string:course_id>/recommendation/student')
-api.add_resource(InstructorRecommendations, api_endpoint + 'course/<string:course_id>/recommendation/instructor')
+api.add_resource(StudentRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/student')
+api.add_resource(InstructorRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/instructor')
 
 api.add_resource(Event, api_endpoint + 'event')
 api.add_resource(Feedbacks, api_endpoint + 'feedback')

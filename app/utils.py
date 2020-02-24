@@ -20,7 +20,7 @@ def create_app(config_name):
     app = Flask("app")
 
     # Override some parameters of rq_dashboard config with app.config
-    app.config.from_object(config_dict[config_name])
+    # app.config.from_object(config_dict[config_name])
 
     return app
 
