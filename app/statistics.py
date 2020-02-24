@@ -9,7 +9,15 @@ import numpy as np
 from app.exception import InvalidUsage
 from app.constants import POST_AGE_SIGMOID_OFFSET, POST_MAX_AGE_DAYS
 
-dynamodb = boto3.resource('dynamodb')
+
+def get_posts_table():
+    dynamodb = boto3.resource('dynamodb')
+    return dynamodb.Table('Posts')
+
+
+def get_courses_table():
+    dynamodb = boto3.resource('dynamodb')
+    return dynamodb.Table('Courses')
 
 
 def is_course_id_valid(course_id):
@@ -25,7 +33,7 @@ def is_course_id_valid(course_id):
     is_valid : bool
         True or False based on whether the course_id is valid or not
     """
-    courses = dynamodb.Table('Courses')
+    courses = get_courses_table()
     return False if courses.get_item(
         Key={
             'course_id': course_id
@@ -84,7 +92,7 @@ def get_inst_att_needed_posts(course_id, number_of_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    posts = dynamodb.Table('Posts')
+    posts = get_posts_table()
 
     DATE_CUTOFF = int(datetime.timestamp(datetime.now() + timedelta(days=-21)))
     filtered_posts = posts.scan(
@@ -162,7 +170,7 @@ def get_stud_att_needed_posts(course_id, num_posts):
     if not is_valid:
         raise InvalidUsage('Invalid course id provided')
 
-    posts = dynamodb.Table('Posts')
+    posts = get_posts_table()
 
     max_age_date = int(datetime.timestamp(now - timedelta(hours=POST_MAX_AGE_DAYS * 24)))
     print(max_age_date)
