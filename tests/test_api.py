@@ -91,16 +91,9 @@ def mock_mark_active_courses(courses):
 
 
 def mock_get_enrolled_courses_from_piazza():
-    mock_boto3 = mock.Mock()
-    mock_response_body = mock.Mock()
-    mock_encoded_body = mock.Mock()
-    mock_encoded_body.decode.return_value = '[{"course_id": "j8rf9vx65vl23t", "course_num": "CS ' \
-                                            '007", "name": "Parqr Test Course", "term": "Fall 2017"}] '
-    mock_response_body.read.return_value = mock_encoded_body
-    mock_boto3.invoke.return_value = {
-        'Payload': mock_response_body
-    }
-    return mock_boto3
+    return json.loads(
+        '[{"course_id": "j8rf9vx65vl23t", "course_num": "CS '                                           '007", '
+        '"name": "Parqr Test Course", "term": "Fall 2017"}] ')
 
 
 class TestCoursesAPI(unittest.TestCase):
@@ -178,7 +171,8 @@ class TestCoursesAPI(unittest.TestCase):
         'statusCode': '200'}
 
     @mock.patch('app.resources.course.mark_active_courses', side_effect=mock_mark_active_courses)
-    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    @mock.patch('app.resources.course.get_enrolled_courses_from_piazza',
+                side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_mark_active_courses_function, mock_boto_function):
         response = api.lambda_handler(TestCoursesAPI.COURSES_EVENT, TestCoursesAPI.CONTEXT)
         assert TestCoursesAPI.COURSES_RESPONSE == response
@@ -254,7 +248,7 @@ class TestCourseAPI(unittest.TestCase):
         'body': '{"course_id": "j8rf9vx65vl23t", "course_num": "CS 007", "name": "Parqr Test '
                 'Course", "term": "Fall 2017"}\n'}
 
-    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    @mock.patch('app.resources.course.get_enrolled_courses_from_piazza', side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_get_enrolled_courses_from_piazza_function):
         response = api.lambda_handler(TestCourseAPI.COURSE_GET_EVENT, TestCourseAPI.CONTEXT)
         assert TestCourseAPI.COURSE_GET_RESPONSE == response
@@ -336,7 +330,7 @@ class TestActiveCourseAPI(unittest.TestCase):
         'statusCode': '200'}
 
     @mock.patch('app.resources.course.mark_active_courses', side_effect=mock_mark_active_courses)
-    @mock.patch('app.resources.course.get_boto3_lambda', side_effect=mock_get_enrolled_courses_from_piazza)
+    @mock.patch('app.resources.course.get_enrolled_courses_from_piazza', side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_mark_active_courses_function, mock_get_enrolled_courses_from_piazza_active_function):
         response = api.lambda_handler(TestActiveCourseAPI.COURSE_GET_EVENT, TestActiveCourseAPI.CONTEXT)
         assert TestActiveCourseAPI.COURSE_GET_RESPONSE == response
