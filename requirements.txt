@@ -32,3 +32,4 @@ sklearn==0.0
 spacy==2.2.1
 simplejson==3.17.0
 aws-wsgi==0.2.4
+Werkzeug==0.16.1

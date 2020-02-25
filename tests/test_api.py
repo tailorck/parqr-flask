@@ -446,6 +446,10 @@ def mock_get_posts_table():
     return mock_boto3
 
 
+def mock_is_course_id_valid(course_id):
+    return True
+
+
 class TestStudentRecommendationAPI(unittest.TestCase):
     QUERY_EVENT = {
         'body': None,
@@ -514,7 +518,8 @@ class TestStudentRecommendationAPI(unittest.TestCase):
                 '"properties": ["0 followups", "2 views", "Tags - hw4, student, unanswered"]}]}\n'}
 
     @mock.patch('app.statistics.get_posts_table', side_effect=mock_get_posts_table)
-    def test_get(self, mock_get_posts_table_function):
+    @mock.patch('app.statistics.is_course_id_valid', side_effect=mock_is_course_id_valid)
+    def test_get(self, mock_get_posts_table_function, mock_is_course_id_valid_function):
         response = api.lambda_handler(TestStudentRecommendationAPI.QUERY_EVENT, TestStudentRecommendationAPI.CONTEXT)
         assert TestStudentRecommendationAPI.QUERY_RESPONSE == response
 
