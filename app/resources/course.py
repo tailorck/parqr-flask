@@ -31,9 +31,27 @@ def get_enrolled_courses_from_piazza():
 
 def mark_active_courses(course_list):
     events = get_boto3_events()
+    boto3_lambda = get_boto3_lambda()
+
+    target_arn = boto3_lambda.get_function(
+        FunctionName='Parser:PROD'
+    ).get('Configuration').get('FunctionArn')
+    response = events.list_rule_names_by_target(
+        TargetArn=target_arn
+    )
+    rule_names = response.get('RuleNames')
+    while response.get('NextToken') is not None:
+        next_token = response.get('NextToken')
+        response = events.list_rule_names_by_target(
+            TargetArn=target_arn,
+            NextToken=next_token
+        )
+        rule_names.extend(response.get('RuleNames'))
+
+    print(rule_names)
 
     for course in course_list:
-        try:
+        if course.get('course_id') in rule_names:
             response = events.describe_rule(
                 Name=course.get('course_id')
             )
@@ -41,7 +59,7 @@ def mark_active_courses(course_list):
                 course['active'] = True
             else:
                 course['active'] = False
-        except events.exceptions.ResourceNotFoundException:
+        else:
             course['active'] = False
 
     return course_list
@@ -50,14 +68,23 @@ def mark_active_courses(course_list):
 class CoursesList(Resource):
 
     def __init__(self):
+        start = time.time()
         self.enrolled_courses = get_enrolled_courses_from_piazza()
+        end = time.time()
+        print("{} seconds to get courses from piazza".format(end - start))
+        start = time.time()
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
+        end = time.time()
+        print("{} seconds to mark courses active".format(end - start))
 
     # @jwt_required()
     def get(self):
+        start = time.time()
         arg_parser = reqparse.RequestParser()
         arg_parser.add_argument('active', type=bool)
         args = arg_parser.parse_args()
+        end = time.time()
+        print("{} seconds to parse args".format(end - start))
 
         if args.active:
             return jsonify(list(filter(lambda x: x['active'], self.enrolled_courses)))
