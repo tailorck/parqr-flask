@@ -260,9 +260,13 @@ class Parqr(object):
 def lambda_handler(event, context):
     print(event, context)
     parqr = Parqr()
-    course_id = event["course_id"]
-    query = event["query"]
-    N = int(event["N"])
+    body = json.loads(event.get("body"))
+    course_id = event['pathParameters'].get("course_id")
+    query = body["query"]
+    N = int(body["N"])
     recs = parqr.get_recommendations(course_id, query, N)
     print(recs)
-    return recs
+    return {
+        'statusCode': '200',
+        'body': json.dumps(recs)
+    }
