@@ -102,7 +102,7 @@ class Parqr(object):
             i_answer = True if not post.i_answer else False
 
             # the modified date
-            date = post.modified
+            modified_date = post.modified
             num_unresolved_followups = post.num_unresolved_followups
             followups = post.followups
             num_followups = len(followups)
@@ -114,6 +114,7 @@ class Parqr(object):
                                     's_answer': s_answer,
                                     'i_answer': i_answer,
                                     'feedback': False,
+                                    'modified_date': modified_date,
                                     'num_followups': num_followups,
                                     'resolved': resolved}
 
