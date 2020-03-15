@@ -1,8 +1,11 @@
 from datetime import datetime
 import time
+import base64
 
 import boto3
 import json
+
+from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
@@ -12,9 +15,29 @@ dynamodb = boto3.client('dynamodb')
 dynamodb_resource = boto3.resource('dynamodb')
 
 
-def read_credentials():
-    """Method to read encrypted .login file for Piazza username and password"""
-    return 'parqrdevteam@gmail.com', 'parqrproducers'
+def get_secret(secret_name):
+    region_name = "us-east-2"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    get_secret_value_response = client.get_secret_value(
+        SecretId=secret_name
+    )
+
+    # Decrypts secret using the associated KMS CMK.
+    # Depending on whether the secret is a string or binary, one of these fields will be populated.
+    print(get_secret_value_response)
+    if 'SecretString' in get_secret_value_response:
+        secret = get_secret_value_response['SecretString']
+    else:
+        decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+
+    return secret, decoded_binary_secret
 
 
 class Parser(object):
@@ -29,11 +52,10 @@ class Parser(object):
     def _login(self):
         """Try to read the login file else prompt the user for manual login"""
         try:
-            email, password = read_credentials()
+            parqr_credentials = get_secret('parqr_credentials')
+            email = parqr_credentials.get('piazza_username')
+            password = parqr_credentials.get('piazza_password')
             self._piazza.user_login(email, password)
-        except IOError:
-            print("File not found. Use encrypt_login.py to "
-                  "create encrypted password store")
         except (UnicodeDecodeError, AuthenticationError) as e:
             print("Incorrect Email/Password found in "
                   "encrypted file store")
@@ -161,9 +183,9 @@ class Parser(object):
                     Item=cleaned_item
                 )
                 train = True
-            except:
+            except ClientError as exp:
+                print(exp.response)
                 print(pid, item)
-                print("ValidationException")
                 current_pids.remove(pid)
                 continue
 
