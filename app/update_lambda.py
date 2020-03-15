@@ -15,25 +15,33 @@ def lambda_handler(event, context):
     ]
 
     for function in function_names:
-        response = client.update_function_code(
-            FunctionName=function,
-            S3Bucket="git-to-amazon-s3-outputbucket-7xiedlur8bgn",
-            S3Key="tailorck/parqr-flask/merge-branch/tailorck_parqr-flask.zip",
-            Publish=True
-        )
-        version = response.get("Version")
-        print("Created new version {} for lambda {}".format(version, function))
+        s3_key = event.get("Records")[0].get("s3").get("object").get("key")
+        if "develop" in s3_key:
+            response = client.update_function_code(
+                FunctionName=function,
+                S3Bucket="git-to-amazon-s3-outputbucket-7xiedlur8bgn",
+                S3Key=s3_key,
+                Publish=True
+            )
+            version = response.get("Version")
+            print("Created new version {} for lambda {}".format(version, function))
 
-        aliases = client.list_aliases(
-            FunctionName=function
-        ).get("Aliases")
+            aliases = client.list_aliases(
+                FunctionName=function
+            ).get("Aliases")
 
-        for alias in aliases:
-            if alias.get("Name") == "PROD":
-                response = client.update_alias(
-                    FunctionName=function,
-                    Name='PROD',
-                    FunctionVersion=version
-                )
-                print("Updated alias PROD for function {} with new version {}"
-                      .format(function, version))
+            for alias in aliases:
+                if alias.get("Name") == "PROD":
+                    client.update_alias(
+                        FunctionName=function,
+                        Name='PROD',
+                        FunctionVersion=version
+                    )
+                    print("Updated alias PROD for function {} with new version {}"
+                          .format(function, version))
+        else:
+            client.update_function_code(
+                FunctionName=function,
+                S3Bucket="git-to-amazon-s3-outputbucket-7xiedlur8bgn",
+                S3Key=s3_key
+            )
