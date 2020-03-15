@@ -1,5 +1,4 @@
-from datetime import datetime
-
+import uuid
 import json
 import boto3
 import numpy as np
@@ -47,7 +46,7 @@ class Feedback(object):
         recommended_pids = [similar_posts[score]["pid"] for score in similar_posts.keys()]
 
         dynamodb = boto3.client('dynamodb')
-        query_rec_id = datetime.now()
+        query_rec_id = uuid.uuid4()
         query_recommendation_pair = {
                 'course_id': cid,
                 'uuid': query_rec_id,
@@ -180,12 +179,11 @@ def lambda_handler(event, context):
     feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
     if event.get("source") == "query":
         similar_posts = event.get("similar_posts")
-        if feedback.requires_feedback():
-            course_id = event.get("course_id")
-            query = event.get("query")
+        course_id = event.get("course_id")
+        query = event.get("query")
 
-            query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
-            similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
+        query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
+        similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
 
         return {"similar_posts": similar_posts}
     else:

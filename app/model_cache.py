@@ -15,8 +15,6 @@ class ModelCache(object):
 
     def store_model(self, cid, name, model):
         key = self.model_key_format.format(cid, name)
-        with open(self.tmp + key, 'wb') as f:
-            pickle.dump(model, f)
         self.s3.put_object(
             Bucket="parqr-models",
             Key=key,
@@ -25,8 +23,6 @@ class ModelCache(object):
 
     def store_matrix(self, cid, name, matrix):
         key = self.matrix_key_format.format(cid, name)
-        with open(self.tmp + key, 'wb') as f:
-            pickle.dump(matrix, f)
         self.s3.put_object(
             Bucket="parqr-models",
             Key=key,
@@ -35,8 +31,6 @@ class ModelCache(object):
 
     def store_pid_list(self, cid, name, pid_list):
         key = self.pid_list_key_format.format(cid, name)
-        with open(self.tmp + key, 'wb') as f:
-            pickle.dump(pid_list, f)
         self.s3.put_object(
             Bucket="parqr-models",
             Key=key,

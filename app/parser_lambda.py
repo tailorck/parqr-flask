@@ -161,9 +161,9 @@ class Parser(object):
                     Item=cleaned_item
                 )
                 train = True
-            except:
+            except posts.exceptions.ClientError as e:
                 print(pid, item)
-                print("ValidationException")
+                print(e)
                 current_pids.remove(pid)
                 continue
 
@@ -186,7 +186,6 @@ class Parser(object):
             print('Unable to parse posts for course: {}. Please '
                   'confirm that the piazza user has access to this '
                   'course'.format(course_id))
-            # Course.objects(course_id=course_id).delete()
             return False, None
         end_time = time.time()
         time_elapsed = end_time - start_time
