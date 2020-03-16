@@ -8,7 +8,7 @@ from app.resources.course import (
     FindCourseByCourseID
 )
 from app.resources.event import Event
-from app.resources.query import StudentQuery, InstructorQuery
+from app.resources.query import InstructorQuery
 from app.resources.recommendations import StudentRecommendations, InstructorRecommendations
 from app.resources.user import Users
 from app.resources.feedback import Feedbacks
