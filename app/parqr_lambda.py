@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta
 
 import time
@@ -266,6 +267,23 @@ def lambda_handler(event, context):
     N = int(body["N"])
     recs = parqr.get_recommendations(course_id, query, N)
     print(recs)
+
+    if random.random() < 0.1:
+        feedback_payload = {
+            "source": "query",
+            "course_id": course_id,
+            "query": query,
+            "similar_posts": recs
+        }
+
+        response = lambda_client.invoke(
+            FunctionName='Feedbacks',
+            InvocationType='RequestResponse',
+            Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
+        )
+
+        recs = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
+
     return {
         'statusCode': '200',
         'body': json.dumps(recs)

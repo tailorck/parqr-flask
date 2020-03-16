@@ -31,7 +31,8 @@ api.add_resource(CoursesList, api_endpoint + 'courses')
 api.add_resource(FindCourseByCourseID, api_endpoint + 'course/<string:course_id>')
 api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active')
 
-api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
+# Replaced by direct call to parqr_lambda
+# api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
 api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
 
 api.add_resource(StudentRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/student')

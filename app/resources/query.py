@@ -16,50 +16,50 @@ def get_boto3_lambda():
 # with open('../related_courses.json') as f:
 #     related_courses = json.load(f)
 
-
-class StudentQuery(Resource):
-
-    def post(self, course_id):
-        """
-        Given course_id and query, retrieve 5 similar posts
-        :return:
-        """
-        query = request.json['query']
-        if query is None:
-            return {'message': 'invalid input, object invalid'}, 400
-
-        print("Getting similar posts from course {} with query {}".format(course_id, query))
-        payload = {
-            "course_id": course_id,
-            "query": query,
-            "N": 5
-        }
-        print(payload)
-        lambda_client = get_boto3_lambda()
-        response = lambda_client.invoke(
-            FunctionName='Parqr',
-            InvocationType='RequestResponse',
-            Payload=bytes(json.dumps(payload), encoding='utf8')
-        )
-        similar_posts = json.loads(response['Payload'].read().decode("utf-8"))
-
-        if random.random() < 0.1:
-            feedback_payload = {
-                "source": "query",
-                "course_id": course_id,
-                "query": query,
-                "similar_posts": similar_posts
-            }
-
-            response = lambda_client.invoke(
-                FunctionName='Feedbacks',
-                InvocationType='RequestResponse',
-                Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
-            )
-
-            similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
-
-        return similar_posts, 200
+# Replaced by direct call to parqr_lambda
+# class StudentQuery(Resource):
+#
+#     def post(self, course_id):
+#         """
+#         Given course_id and query, retrieve 5 similar posts
+#         :return:
+#         """
+#         query = request.json['query']
+#         if query is None:
+#             return {'message': 'invalid input, object invalid'}, 400
+#
+#         print("Getting similar posts from course {} with query {}".format(course_id, query))
+#         payload = {
+#             "course_id": course_id,
+#             "query": query,
+#             "N": 5
+#         }
+#         print(payload)
+#         lambda_client = get_boto3_lambda()
+#         response = lambda_client.invoke(
+#             FunctionName='Parqr',
+#             InvocationType='RequestResponse',
+#             Payload=bytes(json.dumps(payload), encoding='utf8')
+#         )
+#         similar_posts = json.loads(response['Payload'].read().decode("utf-8"))
+#
+#         if random.random() < 0.1:
+#             feedback_payload = {
+#                 "source": "query",
+#                 "course_id": course_id,
+#                 "query": query,
+#                 "similar_posts": similar_posts
+#             }
+#
+#             response = lambda_client.invoke(
+#                 FunctionName='Feedbacks',
+#                 InvocationType='RequestResponse',
+#                 Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
+#             )
+#
+#             similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
+#
+#         return similar_posts, 200
 
 
 class InstructorQuery(Resource):
