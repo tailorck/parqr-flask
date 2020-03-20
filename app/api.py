@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from flask import jsonify, make_response, request
 from flask_restful import Api, request, abort
 from app.resources.course import (
@@ -23,24 +21,23 @@ class CustomApi(Api):
         abort(e.code, str(e))
 
 
-api_endpoint = '/'
-app = create_app("")
+app = create_app("parqr")
 api = CustomApi(app)
 
-api.add_resource(CoursesList, api_endpoint + 'courses')
-api.add_resource(FindCourseByCourseID, api_endpoint + 'course/<string:course_id>')
-api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active')
+api.add_resource(CoursesList, '/courses')
+api.add_resource(FindCourseByCourseID, '/course/<string:course_id>')
+api.add_resource(ActiveCourse, '/course/<string:course_id>/active')
 
-api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
-api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
+api.add_resource(StudentQuery, '/course/<string:course_id>/query/student')
+api.add_resource(InstructorQuery, '/course/<string:course_id>/query/instructor')
 
-api.add_resource(StudentRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/student')
-api.add_resource(InstructorRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/instructor')
+api.add_resource(StudentRecommendations, '/courses/<string:course_id>/recommendation/student')
+api.add_resource(InstructorRecommendations, '/courses/<string:course_id>/recommendation/instructor')
 
-api.add_resource(Event, api_endpoint + 'event')
-api.add_resource(Feedbacks, api_endpoint + 'feedback')
+api.add_resource(Event, '/event')
+api.add_resource(Feedbacks, '/feedback')
 
-api.add_resource(Users, api_endpoint + 'users')
+api.add_resource(Users, '/users')
 
 
 @app.errorhandler(404)
@@ -53,7 +50,7 @@ def on_invalid_usage(error):
     return make_response(jsonify(to_dict(error)), error.status_code)
 
 
-@app.route(api_endpoint, methods=['GET', 'POST'])
+@app.route("/", methods=['GET', 'POST'])
 def index():
     print(request.args.get('hi'))
     return "Hello, World!"

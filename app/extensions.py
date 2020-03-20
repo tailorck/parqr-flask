@@ -6,6 +6,6 @@ from app.constants import (
     FEEDBACK_MAX_RATING,
     FEEDBACK_MIN_RATING
 )
-from app.feedback import Feedback
+from app.feedback_lambda import Feedback
 
 feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)

@@ -4,30 +4,16 @@ from app.config import config_dict
 from app.exception import InvalidUsage
 
 
-def create_app(config_name):
+def create_app(app_name):
     """Creates a flask object with the appropriate configurations.
 
-    Parameters
-    ----------
-    config_name : str
-        config_name is a string to declare the type of configuration to put the
-        application in. It is one of ['development', 'production', 'testing'].
+    Args:
+        app_name (str): The name of the Flask App
+    Returns:
+        app
 
-    Returns
-    -------
-    app : Flask object
     """
-    app = Flask("app")
-
-    # Override some parameters of rq_dashboard config with app.config
-    # app.config.from_object(config_dict[config_name])
-
-    return app
-
-
-def read_credentials():
-    """Method to read encrypted .login file for Piazza username and password"""
-    return 'parqrdevteam@gmail.com', 'parqrproducers'
+    return Flask(app_name)
 
 
 def verify_non_empty_json_request(func):

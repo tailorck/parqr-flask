@@ -1,18 +1,14 @@
-from flask_restful import Resource
-from flask import request
-from collections import defaultdict
 import json
 import boto3
+from collections import defaultdict
 
-from app.extensions import feedback
+import numpy as np
+from flask_restful import Resource
+from flask import request
 
 
 def get_boto3_lambda():
     return boto3.client('lambda')
-
-
-# with open('../related_courses.json') as f:
-#     related_courses = json.load(f)
 
 
 class StudentQuery(Resource):
@@ -41,19 +37,20 @@ class StudentQuery(Resource):
         )
         similar_posts = json.loads(response['Payload'].read().decode("utf-8"))
 
-        # feedback_payload = {
-        #     "source": "query",
-        #     "course_id": course_id,
-        #     "query": query,
-        #     "similar_posts": similar_posts
-        # }
-        #
-        # response = lambda_client.invoke(
-        #     FunctionName='Feedbacks',
-        #     InvocationType='RequestResponse',
-        #     Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
-        # )
-        # similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
+        # check if feedback is required
+        feedback_payload = {
+            "source": "query",
+            "course_id": course_id,
+            "query": query,
+            "similar_posts": similar_posts
+        }
+
+        response = lambda_client.invoke(
+            FunctionName='Feedbacks',
+            InvocationType='RequestResponse',
+            Payload=bytes(json.dumps(feedback_payload), encoding='utf8')
+        )
+        similar_posts = json.loads(response['Payload'].read().decode("utf-8")).get("similar_posts")
 
         return similar_posts, 200
 
