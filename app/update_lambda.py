@@ -17,6 +17,16 @@ def lambda_handler(event, context):
     for function in function_names:
         s3_key = event.get("Records")[0].get("s3").get("object").get("key")
         if "develop" in s3_key:
+            if function == "Parqr-API":
+                client.update_function_configuration(
+                    FunctionName=function,
+                    Environment={
+                        'Variables': {
+                            'stage': 'prod'
+                        }
+                    }
+                )
+
             response = client.update_function_code(
                 FunctionName=function,
                 S3Bucket="git-to-amazon-s3-outputbucket-7xiedlur8bgn",
@@ -25,6 +35,16 @@ def lambda_handler(event, context):
             )
             version = response.get("Version")
             print("Created new version {} for lambda {}".format(version, function))
+
+            if function == "Parqr-API":
+                client.update_function_configuration(
+                    FunctionName=function,
+                    Environment={
+                        'Variables': {
+                            'stage': 'dev'
+                        }
+                    }
+                )
 
             aliases = client.list_aliases(
                 FunctionName=function

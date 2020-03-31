@@ -1,4 +1,5 @@
 from collections import namedtuple
+import os
 
 from flask import jsonify, make_response, request
 from flask_restful import Api, request, abort
@@ -23,7 +24,7 @@ class CustomApi(Api):
         abort(e.code, str(e))
 
 
-api_endpoint = '/'
+api_endpoint = '/{}/'.format(os.environ.get('stage'))
 app = create_app("")
 api = CustomApi(app)
 
@@ -61,7 +62,8 @@ def index():
 
 
 def lambda_handler(event, context):
-    print(event, context)
+    print(os.environ.get('stage'), event, context)
+    print(api_endpoint)
     response = awsgi.response(app, event, context)
     print(response)
     return response
