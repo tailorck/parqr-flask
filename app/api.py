@@ -2,6 +2,7 @@ from collections import namedtuple
 import os
 
 from flask import jsonify, make_response, request
+from flask_cors import CORS
 from flask_restful import Api, request, abort
 from app.resources.course import (
     CoursesList,
@@ -26,6 +27,7 @@ class CustomApi(Api):
 
 api_endpoint = '/{}/'.format(os.environ.get('stage'))
 app = create_app("")
+CORS(app)
 api = CustomApi(app)
 
 api.add_resource(CoursesList, api_endpoint + 'courses')
@@ -65,5 +67,6 @@ def lambda_handler(event, context):
     print(os.environ.get('stage'), event, context)
     print(api_endpoint)
     response = awsgi.response(app, event, context)
+    response["Access-Control-Allow-Origin"] = "*"
     print(response)
     return response
