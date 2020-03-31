@@ -67,6 +67,5 @@ def lambda_handler(event, context):
     print(os.environ.get('stage'), event, context)
     print(api_endpoint)
     response = awsgi.response(app, event, context)
-    response["Access-Control-Allow-Origin"] = "*"
     print(response)
     return response
