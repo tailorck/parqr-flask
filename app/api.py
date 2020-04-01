@@ -58,13 +58,11 @@ def on_invalid_usage(error):
 
 @app.route(api_endpoint, methods=['GET', 'POST'])
 def index():
-    print(request.args.get('hi'))
     return "Hello, World!"
 
 
 def lambda_handler(event, context):
     print(os.environ.get('stage'), event, context)
-    print(api_endpoint)
     response = awsgi.response(app, event, context)
     print(response)
     return response
