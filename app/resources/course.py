@@ -180,6 +180,14 @@ class ActiveCourse(Resource):
             print("Error putting cloudwatch event target")
             return {'message': 'Internal Server Error'}, 500
 
+        return {
+                   'message': {
+                       'status': 'success',
+                       'course_id': course_id,
+                       "active": True
+                   }
+               }, 200
+
     # @jwt_required()
     def delete(self, course_id):
         print('Deregistering course: {}'.format(course_id))
