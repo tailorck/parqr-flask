@@ -1,3 +1,6 @@
+import copy
+import uuid
+
 import boto3
 from flask_restful import (
     Resource,
@@ -21,8 +24,10 @@ class Event(Resource):
             event_type, user_id, course_id, event_data
         ))
 
+        event = copy.deepcopy(request.json)
+        event['uuid'] = uuid.uuid4()
         self.events.put_item(
-            Item=request.json
+            Item=event
         )
 
         return {'message': 'success'}, 200
