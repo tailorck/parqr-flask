@@ -56,7 +56,7 @@ def on_invalid_usage(error):
     return make_response(jsonify(to_dict(error)), error.status_code)
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route(api_endpoint, methods=['GET', 'POST'])
 def index():
     print(request.args.get('hi'))
     return "Hello, World!"
