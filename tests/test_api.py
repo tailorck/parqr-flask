@@ -55,7 +55,7 @@ class TestCourseAPI(unittest.TestCase):
     @mock.patch('app.resources.course.get_enrolled_courses_from_piazza',
                 side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_get_enrolled_courses_from_piazza_function):
-        res = self.test_app.get("/prod/course/j8rf9vx65vl23t")
+        res = self.test_app.get("/prod/courses/j8rf9vx65vl23t")
         assert res.status_code == 200
         assert self.res_data == res.data
 
@@ -73,7 +73,7 @@ class TestActiveCourseAPI(unittest.TestCase):
     @mock.patch('app.resources.course.get_enrolled_courses_from_piazza',
                 side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_mark_active_courses_function, mock_get_enrolled_courses_from_piazza_active_function):
-        res = self.test_app.get('/prod/course/j8rf9vx65vl23t/active')
+        res = self.test_app.get('/prod/courses/j8rf9vx65vl23t/active')
 
         assert res.status_code == 200
         assert res.data == self.res_data
