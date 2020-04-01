@@ -33,9 +33,14 @@ def mark_active_courses(course_list):
     events = get_boto3_events()
     boto3_lambda = get_boto3_lambda()
 
+    print("Course List: {}".format(course_list))
+
+    # Get the Function arn for Parser
     target_arn = boto3_lambda.get_function(
         FunctionName='Parser:PROD'
     ).get('Configuration').get('FunctionArn')
+
+    # Get all the courses that currently have rules that target Parser
     response = events.list_rule_names_by_target(
         TargetArn=target_arn
     )
@@ -48,13 +53,16 @@ def mark_active_courses(course_list):
         )
         rule_names.extend(response.get('RuleNames'))
 
-    print(rule_names)
+    print("Rule Names targeting Parser: {}".format(rule_names))
 
     for course in course_list:
+        # Check if the course_id has a rule, if it does not, then it is disabled
         if course.get('course_id') in rule_names:
             response = events.describe_rule(
                 Name=course.get('course_id')
             )
+
+            # Check if a rule is enabled
             if response.get('State') == 'ENABLED':
                 course['active'] = True
             else:

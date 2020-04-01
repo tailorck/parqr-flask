@@ -5,7 +5,6 @@ import base64
 import boto3
 import json
 
-from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
@@ -19,25 +18,16 @@ def get_secret(secret_name):
     region_name = "us-east-2"
 
     # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
+    client = boto3.client(
         service_name='secretsmanager',
         region_name=region_name
     )
 
-    get_secret_value_response = client.get_secret_value(
+    response = client.get_secret_value(
         SecretId=secret_name
     )
 
-    # Decrypts secret using the associated KMS CMK.
-    # Depending on whether the secret is a string or binary, one of these fields will be populated.
-    print(get_secret_value_response)
-    if 'SecretString' in get_secret_value_response:
-        secret = get_secret_value_response['SecretString']
-    else:
-        decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
-
-    return secret, decoded_binary_secret
+    return json.loads(response["SecretString"])
 
 
 class Parser(object):
@@ -52,15 +42,15 @@ class Parser(object):
     def _login(self):
         """Try to read the login file else prompt the user for manual login"""
         try:
-            parqr_credentials = get_secret('parqr_credentials')
+            parqr_credentials = get_secret('piazza_credentials')
             email = parqr_credentials.get('piazza_username')
             password = parqr_credentials.get('piazza_password')
             self._piazza.user_login(email, password)
         except (UnicodeDecodeError, AuthenticationError) as e:
-            print("Incorrect Email/Password found in "
-                  "encrypted file store")
+            print("Unable to authenticate with Piazza. Incorrect Email/Password")
 
     def get_enrolled_courses(self):
+        """Returns currently enrolled courses in a pretty format method"""
         enrolled_courses = self._piazza.get_user_classes()
         return [{'name': d['name'], 'course_id': d['nid'], 'term': d['term'],
                  'course_num': d['num']} for d in enrolled_courses]
@@ -183,9 +173,9 @@ class Parser(object):
                     Item=cleaned_item
                 )
                 train = True
-            except ClientError as exp:
-                print(exp.response)
+            except posts.exceptions.ClientError as e:
                 print(pid, item)
+                print(e)
                 current_pids.remove(pid)
                 continue
 
@@ -200,20 +190,17 @@ class Parser(object):
             )
             train = True
 
-        # TODO: Figure out another way to verify whether the current user has
-        # access to a class.
-        # In the event the course_id was invalid or no posts were parsed,
-        # delete course object # TODO: Should we delete the table?
+        # TODO: Figure out another way to verify whether the current user has access to a class.
+        # In the event the course_id was invalid or no posts were parsed, delete course object
+        # TODO: Should we delete the table?
         if len(pids) != 0 and len(current_pids) == 0:
             print('Unable to parse posts for course: {}. Please '
                   'confirm that the piazza user has access to this '
                   'course'.format(course_id))
-            # Course.objects(course_id=course_id).delete()
             return False, None
         end_time = time.time()
         time_elapsed = end_time - start_time
-        print('Course updated. {} new posts scraped in: '
-              '{:.2f}s'.format(len(current_pids), time_elapsed))
+        print('Course updated. {} new posts scraped in: {:.2f}s'.format(len(current_pids), time_elapsed))
 
         courses.update_item(
             Key={

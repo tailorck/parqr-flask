@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 
 import json
 import boto3
@@ -21,7 +20,6 @@ class Feedback(object):
             min_rating : int
                 The minimum rating to accept for a post
         """
-
         self.max_rating = max_rating
         self.min_rating = min_rating
         self.feedback_probability = feedback_probability
@@ -192,12 +190,11 @@ def lambda_handler(event, context):
     feedback = Feedback(FEEDBACK_MAX_RATING, FEEDBACK_MIN_RATING)
     if event.get("source") == "query":
         similar_posts = event.get("similar_posts")
-        if feedback.requires_feedback():
-            course_id = event.get("course_id")
-            query = event.get("query")
+        course_id = event.get("course_id")
+        query = event.get("query")
 
-            query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
-            similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
+        query_rec_id = feedback.save_query_rec_pair(course_id, query, similar_posts)
+        similar_posts = feedback.update_recommendations(query_rec_id, similar_posts)
 
         return {"similar_posts": similar_posts}
     else:

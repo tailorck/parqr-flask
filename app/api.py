@@ -1,4 +1,7 @@
-from flask import jsonify, make_response, request
+import os
+
+from flask import jsonify, make_response
+from flask_cors import CORS
 from flask_restful import Api, request, abort
 from app.resources.course import (
     CoursesList,
@@ -6,7 +9,7 @@ from app.resources.course import (
     FindCourseByCourseID
 )
 from app.resources.event import Event
-from app.resources.query import StudentQuery, InstructorQuery
+from app.resources.query import InstructorQuery
 from app.resources.recommendations import StudentRecommendations, InstructorRecommendations
 from app.resources.user import Users
 from app.resources.feedback import Feedbacks
@@ -21,23 +24,26 @@ class CustomApi(Api):
         abort(e.code, str(e))
 
 
-app = create_app("parqr")
+api_endpoint = '/{}/'.format(os.environ.get('stage'))
+app = create_app("")
+CORS(app)
 api = CustomApi(app)
 
-api.add_resource(CoursesList, '/courses')
-api.add_resource(FindCourseByCourseID, '/course/<string:course_id>')
-api.add_resource(ActiveCourse, '/course/<string:course_id>/active')
+api.add_resource(CoursesList, api_endpoint + 'courses')
+api.add_resource(FindCourseByCourseID, api_endpoint + 'course/<string:course_id>')
+api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active')
 
-api.add_resource(StudentQuery, '/course/<string:course_id>/query/student')
-api.add_resource(InstructorQuery, '/course/<string:course_id>/query/instructor')
+# Replaced by direct call to parqr_lambda
+# api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
+# api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
 
-api.add_resource(StudentRecommendations, '/courses/<string:course_id>/recommendation/student')
-api.add_resource(InstructorRecommendations, '/courses/<string:course_id>/recommendation/instructor')
+api.add_resource(StudentRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/student')
+api.add_resource(InstructorRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/instructor')
 
-api.add_resource(Event, '/event')
-api.add_resource(Feedbacks, '/feedback')
+api.add_resource(Event, api_endpoint + 'event')
+api.add_resource(Feedbacks, api_endpoint + 'feedback')
 
-api.add_resource(Users, '/users')
+api.add_resource(Users, api_endpoint + 'users')
 
 
 @app.errorhandler(404)
@@ -57,7 +63,8 @@ def index():
 
 
 def lambda_handler(event, context):
-    print(event, context)
+    print(os.environ.get('stage'), event, context)
+    print(api_endpoint)
     response = awsgi.response(app, event, context)
     print(response)
     return response
