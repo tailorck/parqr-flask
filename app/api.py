@@ -1,7 +1,6 @@
-from collections import namedtuple
 import os
 
-from flask import jsonify, make_response, request
+from flask import jsonify, make_response
 from flask_cors import CORS
 from flask_restful import Api, request, abort
 from app.resources.course import (
@@ -36,7 +35,7 @@ api.add_resource(ActiveCourse, api_endpoint + 'course/<string:course_id>/active'
 
 # Replaced by direct call to parqr_lambda
 # api.add_resource(StudentQuery, api_endpoint + 'course/<string:course_id>/query/student')
-api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
+# api.add_resource(InstructorQuery, api_endpoint + 'course/<string:course_id>/query/instructor')
 
 api.add_resource(StudentRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/student')
 api.add_resource(InstructorRecommendations, api_endpoint + 'courses/<string:course_id>/recommendation/instructor')

@@ -1,4 +1,5 @@
 import uuid
+
 import json
 import boto3
 import numpy as np
@@ -19,40 +20,56 @@ class Feedback(object):
             min_rating : int
                 The minimum rating to accept for a post
         """
-
         self.max_rating = max_rating
         self.min_rating = min_rating
         self.feedback_probability = feedback_probability
 
     def requires_feedback(self):
-        """ Given a set of recommendations, decides whether
-            to request feedback from the user or not.
+        """ Probalisticly decides whether to request feedback from the user or not.
 
-            Returns
-            -------
-            similar_posts : dict
-                The same dictionary, but with a boolean flag added for each
-                post. The flag is true if feedback should be requested.
+        Returns:
+            requires_feedback (bool): Whether to request feedback or not.
         """
         return np.random.random_sample() < self.feedback_probability
 
     def update_recommendations(self, query_rec_id, similar_posts):
+        """ Updates a set of recommendations to instruct frontend to provide feedback.
+
+        Args:
+            query_rec_id: The query recommendation pair ID used as the primary key in DynamoDB
+            similar_posts: A dictionary of recommendations provided to the user
+
+        Returns:
+            similar_posts (dict): A dictionary of recommendations with the feedback flag set
+
+        """
         for key in similar_posts:
             similar_posts[key]['feedback'] = True
         similar_posts['query_rec_id'] = query_rec_id
         return similar_posts
 
-    def save_query_rec_pair(self, cid, query, similar_posts):
+    def save_query_rec_pair(self, course_id, query, similar_posts):
+        """ Given a course id, a query string, and a set of recommendations for query, store into DynamoDB to track
+        feedback
+
+        Args:
+            course_id: The course id for the query recommendation pair
+            query: The query that was provided by the user
+            similar_posts: The set of recommendations provided by our algorithm
+
+        Returns:
+            query_rec_id (str): The primary key for query recommendation id in DynamoDB
+        """
         recommended_pids = [similar_posts[score]["pid"] for score in similar_posts.keys()]
 
         dynamodb = boto3.client('dynamodb')
         query_rec_id = uuid.uuid4()
         query_recommendation_pair = {
-                'course_id': cid,
-                'uuid': query_rec_id,
-                'query': query,
-                'recommended_pids': recommended_pids
-            }
+            'course_id': course_id,
+            'uuid': query_rec_id,
+            'query': query,
+            'recommended_pids': recommended_pids
+        }
 
         dynamodb.put_item(
             TableName='Feedbacks',
@@ -61,21 +78,18 @@ class Feedback(object):
 
         return query_rec_id
 
-    def validate_feedback(self, course_id, user_id, query_rec_id, feedback_pid, user_rating):
-        """ Performs a sanity check on the feedback.
-            Returns true if the feedback is in a valid format
-            and holds valid data. Returns false otherwise.
+    def validate_feedback(self, query_rec_id, feedback_pid, user_rating):
+        """ Performs a sanity check on the feedback. Returns true if the feedback is in a valid format and holds valid
+        data. Returns false otherwise.
 
-            Parameters
-            ----------
-            feedback : dict
-                The feedback to register
-            Returns
-            -------
-            valid : boolean
-                A boolean saying whether the feedback is valid or not
+        Args:
+            query_rec_id: The query recommendation pair primary key in DynamoDB
+            feedback_pid: The post ID of the post that the feedback was selected for
+            user_rating: The rating provided by the user
+
+        Returns:
+            valid_feedback (bool): Whether the input checks out or not
         """
-
         # Check that the user rating are within the accepted limits
         if (user_rating < self.min_rating) or (user_rating > self.max_rating):
             return False, "Rating must be between {} and {}.".format(self.min_rating, self.max_rating)
@@ -101,10 +115,6 @@ class Feedback(object):
         if not query:
             return False, "Invalid query string."
 
-        # Check for valid course id
-        # if not Course.objects(course_id=course_id):
-        #     return False, "Course {} is currently not supported.".format(course_id)
-
         # Check that the feedback is for a post that was actually recommended
         recommended_pids = json.loads(query_rec_pair.get("recommended_pids").get('S'))
 
@@ -112,26 +122,19 @@ class Feedback(object):
             return False, "The post id {} is not in the list of suggested posts ids {}.".format(feedback_pid,
                                                                                                 recommended_pids)
 
-        # Check that all suggested pids actually exist
-        # for pid in recommended_pids:
-        #     if not Post.objects(course_id=course_id, post_id=pid):
-        #         return False, "Post id {} does not exist for course {}".format(pid, course_id)
-
         return True, query_rec_pair
 
     @staticmethod
-    def register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating):
+    def register_feedback(query_rec_id, user_rating):
         """ Registers given feedback in the database.
-            Parameters
-            ----------
-            feedback : dict
-                A dictionary with the feedback data.
-            Returns
-            -------
-            success : boolean
-                True if the data was registered successfully, false otherwise.
-        """
 
+        Args:
+            query_rec_id: The primary key for query recommendation pair
+            user_rating: The rating provided by the user
+
+        Returns:
+            success (bool): Whether the feedback was successfully registered
+        """
         dynamodb = boto3.client('dynamodb')
         query_rec_pair = dynamodb.get_item(
             TableName='Feedbacks',
@@ -166,6 +169,14 @@ class Feedback(object):
 
     @staticmethod
     def unpack_feedback(feedback):
+        """ Given a feedback dictionary, unpack it to retrieve its components
+
+        Args:
+            feedback: A dictionary with feedback information
+
+        Returns:
+            course_id, user_id, query_rec_id, feedback_pid, user_rating
+        """
         course_id = feedback["course_id"]
         user_id = feedback["user_id"]
         query_rec_id = feedback["query_rec_id"]
