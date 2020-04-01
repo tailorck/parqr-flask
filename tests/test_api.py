@@ -1,7 +1,5 @@
 import unittest
-import os
 import mock
-from test.support import EnvironmentVarGuard
 import json
 from decimal import Decimal
 
