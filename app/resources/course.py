@@ -138,6 +138,23 @@ class ActiveCourse(Resource):
 
         # Create a new event as a cloud cron job
         cloudwatch_events = get_boto3_events()
+
+        # Check if course is already registered
+        try:
+            cloudwatch_events.enable_rule(
+                Name=course_id
+            )
+            print("Course already registered in PARQR")
+            return {
+                       'message': {
+                           'status': 'success',
+                           'course_id': course_id,
+                           "active": True
+                       }
+                   }, 200
+        except cloudwatch_events.exceptions.ResourceNotFoundException:
+            pass
+
         rule_arn = cloudwatch_events.put_rule(
             Name=course_id,
             ScheduleExpression='rate(15 minutes)',
@@ -197,13 +214,17 @@ class ActiveCourse(Resource):
             Name=course_id
         )
 
-        return {'course_id disabled': course_id}, 200
+        return {
+            "status": "success",
+            "course_id": course_id,
+            "active": False
+        }, 200
 
 
 class FindCourseByCourseID(Resource):
 
     def get(self, course_id):
-        enrolled_courses = get_enrolled_courses_from_piazza()
+        enrolled_courses = mark_active_courses(get_enrolled_courses_from_piazza())
         for course in enrolled_courses:
             if course['course_id'] == course_id:
                 return course, 200
