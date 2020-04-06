@@ -198,12 +198,10 @@ class ActiveCourse(Resource):
             return {'message': 'Internal Server Error'}, 500
 
         return {
-                   'message': {
-                       'status': 'success',
-                       'course_id': course_id,
-                       "active": True
-                   }
-               }, 200
+            'status': 'success',
+            'course_id': course_id,
+            "active": True
+        }, 200
 
     # @jwt_required()
     def delete(self, course_id):
