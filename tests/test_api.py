@@ -50,14 +50,20 @@ class TestCourseAPI(unittest.TestCase):
             from app import api
             self.test_app = api.app.test_client()
 
-        self.res_data = b'{"course_id": "j8rf9vx65vl23t", "course_num": "CS 007", "name": "Parqr Test Course", "term": "Fall 2017"}\n'
+        self.res_data = {
+            "name": "Parqr Test Course",
+            "course_id": "j8rf9vx65vl23t",
+            "term": "Fall 2017",
+            "course_num": "CS 007",
+            "active": True
+        }
 
     @mock.patch('app.resources.course.get_enrolled_courses_from_piazza',
                 side_effect=mock_get_enrolled_courses_from_piazza)
     def test_get(self, mock_get_enrolled_courses_from_piazza_function):
         res = self.test_app.get("/prod/courses/j8rf9vx65vl23t")
         assert res.status_code == 200
-        assert self.res_data == res.data
+        assert self.res_data == json.loads(res.data)
 
 
 class TestActiveCourseAPI(unittest.TestCase):
