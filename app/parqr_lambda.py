@@ -125,7 +125,7 @@ class Parqr(object):
             i_answer = True if post.get("i_answer") is not None else False
 
             # the modified date
-            modified_date = post.get("created")
+            modified_date = str(post.get("created"))
             num_unresolved_followups = post.get("num_unresolved_followups")
             followups = post.get("followups")
             num_followups = len(followups)
