@@ -207,7 +207,7 @@ def lambda_handler(event, context):
         return {"similar_posts": similar_posts}
     else:
         course_id, user_id, query_rec_id, feedback_pid, user_rating = feedback.unpack_feedback(event)
-        valid, message = feedback.validate_feedback(course_id, query_rec_id, feedback_pid, user_rating)
+        valid, message = feedback.validate_feedback(query_rec_id, feedback_pid, user_rating)
 
         # If not failed, return invalid usage
         if not valid:
