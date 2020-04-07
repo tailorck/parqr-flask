@@ -124,12 +124,22 @@ class Parqr(object):
             s_answer = True if post.get("s_answer") is not None else False
             i_answer = True if post.get("i_answer") is not None else False
 
+            # the modified date
+            modified_date = post.get("created")
+            num_unresolved_followups = post.get("num_unresolved_followups")
+            followups = post.get("followups")
+            num_followups = len(followups)
+            resolved = True if not num_unresolved_followups else False
+
             if score > SCORE_THRESHOLD:
                 top_posts[score] = {'pid': pid,
                                     'subject': subject,
                                     's_answer': s_answer,
                                     'i_answer': i_answer,
-                                    'feedback': False}
+                                    'feedback': False,
+                                    'modified_date': modified_date,
+                                    'num_followups': num_followups,
+                                    'resolved': resolved}
 
         return top_posts
 
