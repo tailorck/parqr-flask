@@ -227,8 +227,9 @@ class FindCourseByCourseID(Resource):
         self.enrolled_courses = mark_active_courses(self.enrolled_courses)
 
     def get(self, course_id):
-        for course in self.enrolled_courses:
-            if course['course_id'] == course_id:
-                return course, 200
+        course = next(filter(lambda x: self.enrolled_courses[x]['course_id'] == course_id, self.enrolled_courses), None)
 
-        return {'message': 'Course is not enrolled.'}, 400
+        if not course:
+            return {'message': 'Course is not enrolled.'}, 400
+
+        return course, 200
