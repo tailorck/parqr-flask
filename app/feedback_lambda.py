@@ -125,7 +125,7 @@ class Feedback(object):
         return True, query_rec_pair
 
     @staticmethod
-    def register_feedback(query_rec_id, user_rating):
+    def register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating, course_id):
         """ Registers given feedback in the database.
 
         Args:
@@ -147,23 +147,31 @@ class Feedback(object):
 
         # If it doesn't exist, return failure
         if not query_rec_pair:
-            return False
-
-        # Record the feedback
-        dynamodb.update_item(
-            TableName='Feedbacks',
-            Key={
-                'uuid': {
-                    'S': query_rec_id
+            dynamodb.put_item(
+                Item={
+                    'query_rec_id': query_rec_id,
+                    'user_id': user_id,
+                    'feedback_pid': feedback_pid,
+                    'user_rating': user_rating,
+                    'course_id': course_id
                 }
-            },
-            UpdateExpression="set user_rating = :user_rating_val",
-            ExpressionAttributeValues={
-                ":user_rating_val": {
-                    'N': str(user_rating)
+            )
+        else:
+            # Record the feedback
+            dynamodb.update_item(
+                TableName='Feedbacks',
+                Key={
+                    'uuid': {
+                        'S': query_rec_id
+                    }
+                },
+                UpdateExpression="set user_rating = :user_rating_val",
+                ExpressionAttributeValues={
+                    ":user_rating_val": {
+                        'N': str(user_rating)
+                    }
                 }
-            }
-        )
+            )
 
         return True
 
@@ -199,11 +207,12 @@ def lambda_handler(event, context):
         return {"similar_posts": similar_posts}
     else:
         course_id, user_id, query_rec_id, feedback_pid, user_rating = feedback.unpack_feedback(event)
-        valid, message = feedback.validate_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating)
+        valid, message = feedback.validate_feedback(course_id, query_rec_id, feedback_pid, user_rating)
 
         # If not failed, return invalid usage
         if not valid:
             return {'message': "Feedback contains invalid data." + message}, 400
+
         success = Feedback.register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating)
 
         if success:
