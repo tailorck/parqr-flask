@@ -125,7 +125,7 @@ class Feedback(object):
         return True, query_rec_pair
 
     @staticmethod
-    def register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating, course_id):
+    def register_feedback(course_id, user_id, query_rec_id, feedback_pid, user_rating):
         """ Registers given feedback in the database.
 
         Args:
