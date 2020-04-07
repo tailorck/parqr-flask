@@ -110,11 +110,11 @@ class ActiveCourse(Resource):
     def get(self, course_id):
         active_course = None
         for course in self.enrolled_courses:
-            if course.get('course_id') == course_id and course.get('active'):
+            if course.get('course_id') == course_id:
                 active_course = course
 
         if not active_course:
-            return {'message': 'Course does not exist or is not active.'}, 400
+            return {'message': 'Course is not enrolled.'}, 400
 
         return active_course, 200
 
@@ -222,10 +222,13 @@ class ActiveCourse(Resource):
 
 class FindCourseByCourseID(Resource):
 
+    def __init__(self):
+        self.enrolled_courses = get_enrolled_courses_from_piazza()
+        self.enrolled_courses = mark_active_courses(self.enrolled_courses)
+
     def get(self, course_id):
-        enrolled_courses = mark_active_courses(get_enrolled_courses_from_piazza())
-        for course in enrolled_courses:
+        for course in self.enrolled_courses:
             if course['course_id'] == course_id:
                 return course, 200
 
-        return {'message': 'Bad input parameter. Course does not exist.'}, 400
+        return {'message': 'Course is not enrolled.'}, 400
