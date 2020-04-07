@@ -195,16 +195,18 @@ class ActiveCourse(Resource):
             print("Error putting cloudwatch event target")
             return {'message': 'Internal Server Error'}, 500
 
-        return {
-            'status': 'success',
-            'course_id': course_id,
-            "active": True
-        }, 200
+        response = {
+           'status': 'success',
+           'course_id': course_id,
+           "active": True
+        }
+        return response, 200
 
     # @jwt_required()
     def delete(self, course_id):
         print('Deregistering course: {}'.format(course_id))
 
+        # TODO: Could this throw an exception?
         cloudwatch_events = get_boto3_events()
         cloudwatch_events.disable_rule(
             Name=course_id
@@ -215,6 +217,7 @@ class ActiveCourse(Resource):
             "course_id": course_id,
             "active": False
         }, 200
+        return response, 200
 
 
 class FindCourseByCourseID(Resource):

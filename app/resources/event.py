@@ -25,7 +25,7 @@ class Event(Resource):
         ))
 
         event = copy.deepcopy(request.json)
-        event['uuid'] = uuid.uuid4()
+        event['uuid'] = str(uuid.uuid4())
         self.events.put_item(
             Item=event
         )
