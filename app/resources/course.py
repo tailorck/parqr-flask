@@ -146,12 +146,10 @@ class ActiveCourse(Resource):
             )
             print("Course already registered in PARQR")
             return {
-                       'message': {
-                           'status': 'success',
-                           'course_id': course_id,
-                           "active": True
-                       }
-                   }, 200
+                'status': 'success',
+                'course_id': course_id,
+                "active": True
+            }, 200
         except cloudwatch_events.exceptions.ResourceNotFoundException:
             pass
 
