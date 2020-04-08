@@ -32,3 +32,15 @@ To test the application, first set the `FLASK_CONF` environment variable:
 Then run pytest in the app directory:
 
     pytest tests/
+
+### Release Procedure
+
+1. git flow release start <version>
+2. Update version.py
+3. Update the CHANGELOG.md
+4. Update the Postman Collection
+5. Verify Circle-Ci tests pass
+6. git flow finish <version>
+7. git push origin master
+8. git push origin develop
+9. git push --tags
