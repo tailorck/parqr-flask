@@ -146,7 +146,6 @@ class ActiveCourse(Resource):
             )
             print("Course already registered in PARQR")
             return {
-                'status': 'success',
                 'course_id': course_id,
                 "active": True
             }, 200
@@ -196,7 +195,6 @@ class ActiveCourse(Resource):
             return {'message': 'Internal Server Error'}, 500
 
         response = {
-           'status': 'success',
            'course_id': course_id,
            "active": True
         }
@@ -213,7 +211,6 @@ class ActiveCourse(Resource):
         )
 
         return {
-            "status": "success",
             "course_id": course_id,
             "active": False
         }, 200

@@ -274,7 +274,7 @@ def lambda_handler(event, context):
     body = json.loads(event.get("body"))
     course_id = event['pathParameters'].get("course_id")
     query = body["query"]
-    N = int(body["N"])
+    N = int(body.get("N")) if body.get("N") else 5
     recs = parqr.get_recommendations(course_id, query, N)
     print(recs)
 
