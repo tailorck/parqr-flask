@@ -6,12 +6,8 @@ version: 2.1
 orbs:
     newman: postman/newman@0.0.2
 jobs:
-  newman-collection-run:
-    executor: newman/postman-newman-docker
-    steps:
-      - checkout
-      - newman/newman-run:
-          collection: ./postman_collection.json
+  executor: newman/postman-newman-docker
+  
   build:
     docker:
       # specify the version you desire here
@@ -23,7 +19,9 @@ jobs:
     steps:
       - checkout
 
-      # Download and cache dependencies
+      - newman/newman-run:
+          collection: ./postman_collection.json
+
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "requirements.txt" }}
