@@ -2,6 +2,7 @@ import unittest
 import mock
 import json
 from decimal import Decimal
+import pytest
 
 
 class TestHelloWorldAPI(unittest.TestCase):
@@ -112,6 +113,21 @@ def mock_is_course_id_valid(course_id):
     return True
 
 
+class TestStudentQueryAPI(unittest.TestCase):
+    def setUp(self):
+        self.env = mock.patch.dict('os.environ', {'stage': 'prod'})
+        with self.env:
+            from app import api
+            self.test_app = api.app.test_client()
+
+        self.res_data = b'{"message": "success", "recommendations": [{"subject": "oh henlo", "post_id": 18, "date_modified": "1581482976", "followups": 0, "views": 2, "tags": ["hw4", "student", "unanswered"], "i_answer": false, "s_answer": false}]}\n'
+
+    @pytest.mark.skip('skip')
+    def test_post(self):
+        # TODO: Aadarsh, can you help me here. This says it can't find the endpoint
+        res = self.test_app.post('/prod/courses/j8rf9vx65vl23t/query/student')
+        assert res.data == self.res_data
+
 class TestStudentRecommendationAPI(unittest.TestCase):
     def setUp(self):
         self.env = mock.patch.dict('os.environ', {'stage': 'prod'})
@@ -119,7 +135,7 @@ class TestStudentRecommendationAPI(unittest.TestCase):
             from app import api
             self.test_app = api.app.test_client()
 
-        self.res_data = b'{"message": "success", "recommendations": [{"title": "oh henlo", "post_id": 18, "properties": ["0 followups", "2 views", "Tags - hw4, student, unanswered"]}]}\n'
+        self.res_data = b'{"message": "success", "recommendations": [{"subject": "oh henlo", "post_id": 18, "date_modified": "1581482976", "followups": 0, "views": 2, "tags": ["hw4", "student", "unanswered"], "i_answer": false, "s_answer": false}]}\n'
 
     @mock.patch('app.statistics.get_posts_table', side_effect=mock_get_posts_table)
     @mock.patch('app.statistics.is_course_id_valid', side_effect=mock_is_course_id_valid)

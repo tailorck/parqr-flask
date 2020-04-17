@@ -196,17 +196,16 @@ def get_stud_att_needed_posts(course_id, num_posts):
         return []
 
     def _create_top_post(post):
-        post_data = {"title": post["subject"], "post_id": int(post["post_id"])}
-
-        # properties includes [# unresolved followups, # views,
-        #                      has_instructor_answer, has_student_answer, tags]
-        properties = ["{} followups".format(len(post["followups"])),
-                      "{} views".format(post["num_views"])]
-
-        if post["tags"]:
-            properties.append("Tags - {}".format(", ".join(post["tags"])))
-
-        post_data["properties"] = properties
+        post_data = {
+            "subject": post["subject"],
+            "post_id": int(post["post_id"]),
+            "date_modified": str(post.get("created")),
+            "followups": len(post.get("followups")),
+            "views": int(post.get("num_views")),
+            "tags": post.get("tags"),
+            "i_answer": True if post.get("i_answer") is not None else False,
+            "s_answer": True if post.get("s_answer") is not None else False
+        }
         return post_data
 
     def _posts_bqs_to_df(bqs):
