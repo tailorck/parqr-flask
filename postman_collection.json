@@ -82,15 +82,6 @@
 									"    if(not_enrolled) {",
 									"        pm.expect.fail()",
 									"    }",
-									"})",
-									"",
-									"pm.test(\"CS 007 Active\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    for(let i=0; i < jsonData.length; i++) {",
-									"        if(jsonData[i][\"course_num\"] == \"CS 007\") {",
-									"            pm.expect(jsonData[i].active).to.be.true",
-									"        }",
-									"    }",
 									"})"
 								],
 								"type": "text/javascript"
