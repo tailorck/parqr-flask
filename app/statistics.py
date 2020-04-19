@@ -204,7 +204,8 @@ def get_stud_att_needed_posts(course_id, num_posts):
             "views": int(post.get("num_views")),
             "tags": post.get("tags"),
             "i_answer": True if post.get("i_answer") is not None else False,
-            "s_answer": True if post.get("s_answer") is not None else False
+            "s_answer": True if post.get("s_answer") is not None else False,
+            "resolved": True if not get("num_unresolved_followups") else False
         }
         return post_data
 
