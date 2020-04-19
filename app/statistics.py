@@ -198,15 +198,15 @@ def get_stud_att_needed_posts(course_id, num_posts):
 
     def _create_top_post(post):
         post_data = {
-            "subject": post["subject"],
             "post_id": int(post["post_id"]),
-            "date_modified": str(post.get("created")),
-            "followups": len(post.get("followups")),
-            "views": int(post.get("num_views")),
-            "tags": post.get("tags"),
+            "subject": post["subject"],
+            "date_modified": int(post["created"]),
+            "followups": len(post["followups"]),
+            "views": int(post["num_views"]),
+            "tags": post["tags"],
             "i_answer": True if post.get("i_answer") is not None else False,
             "s_answer": True if post.get("s_answer") is not None else False,
-            "resolved": True if not post.get("num_unresolved_followups") else False
+            "resolved": True if int(post.get("num_unresolved_followups")) == 0 else False
         }
         return post_data
 
@@ -227,11 +227,10 @@ def get_stud_att_needed_posts(course_id, num_posts):
         x = x + 1
         return x / (x.max() - x.min())
 
-    print(filtered_posts)
+    print("{} filtered posts".format(len(filtered_posts)))
     posts_df = _posts_bqs_to_df(filtered_posts)
     posts_df.created = posts_df.created.fillna(posts_df.created.min())
     posts_age = (now - posts_df.created)
-    print(now, posts_df.created, posts_age)
     posts_df['norm_created'] = _sigmoid(posts_age.dt.days,
                                         POST_AGE_SIGMOID_OFFSET, True)
     posts_df['norm_num_followups'] = _min_max_norm(posts_df.num_followups)
