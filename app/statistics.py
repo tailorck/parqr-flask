@@ -1,19 +1,19 @@
+import os
 import platform
-
 import botocore
 import simplejson as json
-from datetime import datetime, timedelta
 import time
-import os
+from datetime import datetime, timedelta
 
+import boto3
+import numpy as np
+import pandas as pd
+import simplejson as json
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
-import boto3
-import pandas as pd
-import numpy as np
 
+from app.constants import DATETIME_FORMAT, POST_AGE_SIGMOID_OFFSET, POST_MAX_AGE_DAYS
 from app.exception import InvalidUsage
-from app.constants import POST_AGE_SIGMOID_OFFSET, POST_MAX_AGE_DAYS
 from app.utils import pretty_date
 
 
@@ -45,7 +45,7 @@ def get_s3():
 
 def _validate_starting_time(starting_time):
     current_time = int(time.time())
-    return True if (current_time > starting_time) else False
+    return current_time > starting_time
 
 
 def events_bqs_to_df(bqs):
@@ -230,4 +230,125 @@ def get_stud_att_needed_posts(course_id, num_posts):
             )
         )
 
-    return recs
+    if len(filtered_posts) == 0:
+        print(
+            "No posts found since {} for course_id {}".format(max_age_date, course_id)
+        )
+        return []
+
+    def _create_top_post(post):
+        post_data = {
+            "post_id": int(post["post_id"]),
+            "subject": post["subject"],
+            "date_modified": int(post["created"]),
+            "followups": len(post.get("followups", [])),
+            "views": int(post["num_views"]),
+            "tags": post["tags"],
+            "i_answer": True if post.get("i_answer") is not None else False,
+            "s_answer": True if post.get("s_answer") is not None else False,
+            "resolved": True
+            if int(post.get("num_unresolved_followups", 0)) == 0
+            else False,
+        }
+
+        return post_data
+
+    def _posts_bqs_to_df(bqs):
+        dictionary = {
+            "post_id": [int(post["post_id"]) for post in bqs],
+            "created": [datetime.fromtimestamp(int(post["created"])) for post in bqs],
+            "num_followups": [len(post.get("followups", [])) for post in bqs],
+            "num_views": [int(post["num_views"]) for post in bqs],
+        }
+        return pd.DataFrame.from_dict(dictionary)
+
+    def _sigmoid(x, lookback, y_axis_flip=False):
+        exponential = np.exp((-1) ** y_axis_flip) * (x - lookback)
+        return exponential / (1 + exponential)
+
+    def _min_max_norm(x):
+        x = x + 1
+        return x / (x.max() - x.min())
+
+    print("{} filtered posts".format(len(filtered_posts)))
+    start = time.time()
+    posts_df = _posts_bqs_to_df(filtered_posts)
+    posts_df.created = posts_df.created.fillna(posts_df.created.min())
+    posts_age = now - posts_df.created
+    posts_df["norm_created"] = _sigmoid(
+        posts_age.dt.days, POST_AGE_SIGMOID_OFFSET, True
+    )
+    posts_df["norm_num_followups"] = _min_max_norm(posts_df.num_followups)
+    posts_df["norm_num_views"] = _min_max_norm(posts_df.num_views)
+    posts_df["importance"] = (
+        posts_df.norm_created * posts_df.norm_num_followups * posts_df.norm_num_views
+    )
+
+    posts_df = posts_df.sort_values(by="importance", ascending=False)
+    filtered_posts_ids = list(posts_df.head(num_posts).post_id)
+    top_posts = [
+        post for post in filtered_posts if post["post_id"] in filtered_posts_ids
+    ]
+    retval = list(map(_create_top_post, top_posts))
+    print(
+        "{} Recommended Posts in {} ms".format(
+            len(retval), (time.time() - start) * 1000
+        )
+    )
+    return retval
+
+
+def avg_response_time(self, course_id, t_start, t_end, include_s_answer=False):
+    """Computes the average response time over an interval, defined
+    as the average time between a question being asked and an answer to that question
+    first being posted
+
+    Parameters
+    ----------
+    course_id : str
+    t_start : datetime or str
+        beginning of time interval, if str should be a valid timestamp in the form %Y-%m-%dT%H:%M:%SZ
+    t_end : datetime or str
+        end of time interval, if str should be a valid timestamp
+    include_s_answer : bool, optional, default False
+        whether or not to consider posts with student answers as "answered". If a question
+        has both instructor and student answers, the instructor answer is used
+
+    Returns
+    -------
+    avg_response_time : float
+        avg response time, or infinity if no posts were answered during the interval
+    support : float
+        the number of samples which contributed to the avg response time
+    """
+    if isinstance(t_start, str):
+        t_start = datetime.strptime(t_start, DATETIME_FORMAT)
+    if isinstance(t_end, str):
+        t_end = datetime.strptime(t_end, DATETIME_FORMAT)
+
+    posts_table = get_posts_table(course_id)
+    if not posts_table:
+        raise InvalidUsage("Invalid course id provided")
+
+    cond_answered = Attr("i_answer").exists()
+    if include_s_answer:
+        cond_answered |= Attr("s_answer").exists()
+
+    cond_ignore_tags = ~Attr("tags").contains("instructor-question")
+    for tag in ("instructor-question", "announcement", "instructor-note", "note"):
+        cond_ignore_tags &= ~Attr("tags").contains(tag)
+
+    answered_posts = posts_table.scan(
+        FilterExpression=(
+            Attr("created").between(t_start, t_end) & cond_ignore_tags & cond_answered
+        )
+    ).get("Items")
+
+    response_times = []
+    for post in answered_posts:
+        if post["i_answer"] is not None:
+            response_times.append(post["i_answer_created"] - post["created"])
+        elif include_s_answer and post["s_answer"] is not None:
+            response_times.append(post["s_answer_created"] - post["created"])
+
+    return sum(response_times) / len(response_times), len(response_times)
