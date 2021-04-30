@@ -1,0 +1,816 @@
+---
+swagger: "2.0"
+info:
+  description: API Details for PARQR
+  version: 2.0.6
+  title: PARQR API
+  contact:
+    email: parqr.dev.team@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: aws.parqr.io
+basePath: /prod/
+tags:
+- name: Course
+  description: Endpoints associated to course actions
+- name: Query
+  description: Endpoints associated to query actions
+- name: Recommendation
+  description: Endpoints associated to recommendation actions
+- name: Feedback
+  description: Endpoints associated to feedback actions
+- name: Event
+  description: Endpoints associated to event actions
+- name: InstructorDashboard
+  description: Endpoints associated to instructor dashboard actions
+schemes:
+- https
+paths:
+  /courses:
+    get:
+      tags:
+      - Course
+      summary: Shows enrolled courses.
+      description: |
+        View all the courses Peter Parqr is enrolled in. If active is True, return the subset of courses that PARQR is actively parsing.
+      operationId: showCourses
+      produces:
+      - application/json
+      parameters:
+      - name: active
+        in: query
+        description: Return only currently active or inactive courses.
+        required: false
+        type: boolean
+        default: false
+      responses:
+        "200":
+          description: search results matching criteria
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Course'
+        "400":
+          description: bad input parameter
+        "401":
+          description: Not Authenticated
+      security:
+      - BasicAuth: []
+  /courses/{course_id}:
+    get:
+      tags:
+      - Course
+      summary: Find course by id.
+      description: |
+        Find course by course id. This will return a single json of the course information if the course is ENROLLED. If the course is not ENROLLED, it will return an error.
+      operationId: findCourse
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Search results matching criteria. Course exists.
+          schema:
+            $ref: '#/definitions/Course'
+        "400":
+          description: Bad input parameter. Course does not exist.
+        "401":
+          description: Not Authenticated
+      security:
+      - BasicAuth: []
+  /courses/{course_id}/active:
+    get:
+      tags:
+      - Course
+      summary: Find course by id.
+      description: |
+        Find course by course id. This will return a single json of the course information if the course is ACTIVE. If the course is not ACTIVE, it will return active as false.
+      operationId: isRegistered
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Search results matching criteria. Course exists.
+          schema:
+            $ref: '#/definitions/Course'
+        "400":
+          description: Bad input parameter. Course does not exist.
+        "401":
+          description: Not Authenticated
+      security:
+      - BasicAuth: []
+    post:
+      tags:
+      - Course
+      summary: register a new course
+      description: Registers a course to make it active.
+      operationId: registerCourse
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to register
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Course activated.
+          schema:
+            $ref: '#/definitions/Activate'
+        "400":
+          description: invalid input, object invalid
+        "401":
+          description: Not Authenticated
+        "409":
+          description: course already registered
+      security:
+      - BasicAuth: []
+    delete:
+      tags:
+      - Course
+      summary: deregister a new course
+      description: Deregisters a course to make it inactive.
+      operationId: deregisterCourse
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to register
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Course activated.
+          schema:
+            $ref: '#/definitions/Activate'
+        "400":
+          description: invalid input, object invalid
+        "401":
+          description: Not Authenticated
+        "409":
+          description: item not found.
+      security:
+      - BasicAuth: []
+  /courses/{course_id}/query/student:
+    post:
+      tags:
+      - Query
+      summary: Query
+      description: Retrieve a set of similar questions asked by other students. Used when student is typing a new question (post).
+      operationId: studentQuery
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to query
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/StudentQuery'
+      responses:
+        "200":
+          description: successful query
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/StudentQueryResponse'
+        "400":
+          description: invalid input, object invalid
+  /courses/{course_id}/query/student/:
+    post:
+      tags:
+      - Query
+      summary: Query
+      description: Instructor Suggestion - Retrieve a set of similar questions asked by other students in the current and past semester. (same url as students.)
+      operationId: instructorQuery
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to query
+        required: true
+        type: string
+      - name: X-Api-Key
+        in: header
+        description: API Key for instructors
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/InstructorQuery'
+      responses:
+        "200":
+          description: successful query
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/InstructorQueryResponse'
+        "400":
+          description: invalid input, object invalid
+  /courses/{course_id}/recommendation/student:
+    get:
+      tags:
+      - Recommendation
+      summary: Recommendation
+      description: Retrieve Student Recommendations for dashboard
+      operationId: studentRecommendations
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to retrieve rec for
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Course activated.
+          schema:
+            $ref: '#/definitions/StudentRecommendation'
+        "400":
+          description: invalid input, object invalid
+  /courses/{course_id}/recommendation/instructor:
+    get:
+      tags:
+      - Recommendation
+      summary: Recommendation
+      description: Retrieve Instructor Recommendations
+      operationId: instructorRecommendations
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to query
+        required: true
+        type: string
+      - name: X-Api-Key
+        in: header
+        description: API Key for instructors
+        required: true
+        type: string
+      responses:
+        "200":
+          description: successful query
+          schema:
+            $ref: '#/definitions/InstructerRecommendation'
+        "400":
+          description: invalid input, object invalid
+  /event:
+    post:
+      tags:
+      - Event
+      summary: Event
+      description: Post a new event
+      operationId: postEvent
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/Event'
+      responses:
+        "200":
+          description: successful query
+        "400":
+          description: invalid input, object invalid
+  /feedback:
+    post:
+      tags:
+      - Feedback
+      summary: Feedback
+      description: Post a new student feedback
+      operationId: postFeedback
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/Feedback'
+      responses:
+        "200":
+          description: successful query
+        "400":
+          description: invalid input, object invalid
+  /courses/{course_id}/resolve:
+    post:
+      tags:
+      - InstructorDashboard
+      summary: resolve a post
+      description: |
+        Resolve a post in the instructor dashboard
+      operationId: resolve
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to query
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/ResolvePostBody'
+      responses:
+        "200":
+          description: successfully resolve or unresolve a post
+  /courses/{course_id}/assign:
+    post:
+      tags:
+      - InstructorDashboard
+      summary: assign a post
+      description: |
+        Assign a post in the instructor dashboard to an instructor
+      operationId: assign
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: course_id
+        in: path
+        description: Course to query
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body
+        required: true
+        schema:
+          $ref: '#/definitions/AssignPostBody'
+      responses:
+        "200":
+          description: successfully resolve or unresolve a post
+securityDefinitions:
+  BasicAuth:
+    type: basic
+definitions:
+  Activate:
+    type: object
+    required:
+    - active
+    - course_id
+    properties:
+      course_id:
+        type: string
+        example: jze974ouf142qb
+      active:
+        type: boolean
+        example: false
+  Course:
+    type: object
+    required:
+    - course_id
+    - name
+    - term
+    properties:
+      course_id:
+        type: string
+        example: jze974ouf142qb
+      course_num:
+        type: string
+        example: CS 6460
+      name:
+        type: string
+        example: Artificial Intelligence
+      term:
+        type: string
+        example: Fall 2017
+      stats:
+        $ref: '#/definitions/Course_stats'
+      active:
+        type: boolean
+        example: false
+  Event:
+    type: object
+    required:
+    - course_id
+    - event_data
+    - event_type
+    - user_id
+    properties:
+      event_type:
+        type: string
+        description: click to log post when instructor clicks recommendation add to answer
+        default: click
+      user_id:
+        type: string
+        example: "867481538782578"
+      course_id:
+        type: string
+        example: jze974ouf142qb
+      event_data:
+        $ref: '#/definitions/Event_event_data'
+  Event_event_data:
+    type: object
+    required:
+    - answerer
+    - postId
+    - postSemester
+    - postTitle
+    - time
+    properties:
+      time:
+        type: integer
+        example: 1517455808181
+      postId:
+        type: integer
+        example: 28
+        description: The id of the post in the current semester which the instructor is trying to answer
+      postSemester:
+        type: string
+        example: Spring 2020
+        description: The semester of the recommended post
+      postTitle:
+        type: string
+        example: How do I do alpha beta pruning
+        description: The title of the recommended post
+      answerer:
+        type: string
+        description: |
+          Answer:
+           * i_answer -  it is an instructor's answer.
+           * s_answer -  it is a student's answer.
+           * null - only when the recommended post is current semester's post and the instructor click the copy pid.
+        enum:
+        - i_answer
+        - s_answer
+  StudentQuery:
+    type: object
+    required:
+    - query
+    properties:
+      query:
+        type: string
+        example: How do I do alpha beta pruning
+      N:
+        type: integer
+        example: 5
+      course_id:
+        type: string
+        example: kjtwqci7hit5i6
+      user_id:
+        type: string
+        example: USER_ID
+  StudentQueryResponse:
+    type: object
+    required:
+    - feedback
+    - i_answer
+    - modified_date
+    - num_followups
+    - pid
+    - pretty_date
+    - resolved
+    - s_answer
+    - score
+    - subject
+    properties:
+      pid:
+        type: integer
+        example: 538
+      score:
+        type: number
+        example: 0.25585403389400985
+      subject:
+        type: string
+        example: Submitting code for final project
+      s_answer:
+        type: boolean
+        example: false
+        description: if there is a student answer
+      i_answer:
+        type: boolean
+        example: true
+        description: if there is an instructor answer
+      feedback:
+        type: boolean
+        example: true
+      modified_date:
+        type: string
+        example: "1611643661"
+      num_followups:
+        type: integer
+        example: 28
+      resolved:
+        type: boolean
+        example: false
+      pretty_date:
+        type: string
+        example: 3mon ago
+  InstructorQuery:
+    type: object
+    required:
+    - query
+    - status
+    properties:
+      query:
+        type: string
+        example: How do I do alpha beta pruning
+      N:
+        type: integer
+        example: 5
+      course_id:
+        type: string
+        example: kjtwqci7hit5i6
+      user_id:
+        type: string
+        example: USER_ID
+      status:
+        type: string
+        example: instructor
+  InstructorQueryResponse:
+    type: object
+    required:
+    - answers
+    - detail
+    - i_answer
+    - modified_date
+    - post_type
+    - pretty_date
+    - s_answer
+    - score
+    - semester
+    - subject
+    properties:
+      score:
+        type: number
+        example: 0.328841838570531
+      subject:
+        type: string
+        example: alpha beta performing better than Iterative Deepening
+      detail:
+        type: string
+        example: alpha beta detail
+      post_type:
+        type: string
+        enum:
+        - question
+        - note
+      semester:
+        type: string
+        example: Spring 2021
+      post_id:
+        type: integer
+        example: 2
+        description: only if the semester is current semester
+      s_answer:
+        type: boolean
+        example: false
+        description: if there is a student answer
+      i_answer:
+        type: boolean
+        example: true
+        description: if there is an instructor answer
+      modified_date:
+        type: integer
+        example: 1612575227
+      pretty_date:
+        type: string
+        example: 2mon ago
+      answers:
+        $ref: '#/definitions/InstructorQueryResponse_answers'
+  InstructorQueryResponse_answers:
+    type: object
+    required:
+    - i_answer
+    - s_answer
+    properties:
+      s_answer:
+        type: string
+      i_answer:
+        type: string
+        example: This is the instructor answer
+  Feedback:
+    type: object
+    required:
+    - course_id
+    - feedback_pid
+    - query_rec_id
+    - user_id
+    - user_rating
+    properties:
+      feedback_pid:
+        type: integer
+        example: 82
+        description: Post ID for feedback
+      query_rec_id:
+        type: string
+        example: d357628d-e49f-475d-b9f3-cd45162c6ddd
+      user_id:
+        type: string
+      course_id:
+        type: string
+        example: jze974ouf142qb
+      user_rating:
+        type: integer
+        example: 4
+  StudentRecommendation:
+    type: object
+    required:
+    - date_modified
+    - followups
+    - i_answer
+    - post_id
+    - s_answer
+    - subject
+    - tags
+    - views
+    properties:
+      post_id:
+        type: integer
+        example: 82
+      subject:
+        type: string
+        example: Should I reset the alpha & beta for iterative deepening?
+      date_modified:
+        type: integer
+        example: 1586133237
+      followups:
+        type: integer
+        example: 22
+      views:
+        type: integer
+        example: 102
+      tags:
+        type: array
+        example:
+        - a1
+        - final
+        items:
+          type: string
+      i_answer:
+        type: boolean
+        example: true
+      s_answer:
+        type: boolean
+        example: false
+  InstructerRecommendation:
+    type: object
+    required:
+    - assignees
+    - i_answer
+    - last_modified
+    - num_unresolved_followups
+    - num_updates
+    - num_views
+    - num_words
+    - post_id
+    - pretty_date
+    - resolved
+    - s_answer
+    - status
+    - tags
+    - title
+    properties:
+      title:
+        type: string
+        example: 'Assignment 6A: Part 2b Discussion'
+      post_id:
+        type: integer
+        example: 1007
+      num_views:
+        type: integer
+        example: 4
+      num_updates:
+        type: integer
+        example: 0
+      num_unresolved_followups:
+        type: integer
+        example: 0
+      i_answer:
+        type: boolean
+        example: true
+      s_answer:
+        type: boolean
+        example: false
+      tags:
+        type: array
+        example:
+        - a1
+        - final
+        items:
+          type: string
+      last_modified:
+        type: integer
+        example: 1618202190
+      pretty_date:
+        type: string
+        example: 4d ago
+      assignees:
+        type: array
+        example:
+        - PARQR
+        - TA's name
+        items:
+          type: string
+      'good_questions:':
+        type: integer
+        example: 1
+      num_words:
+        type: integer
+        example: 102
+      status:
+        type: string
+        example: active
+      resolved:
+        type: boolean
+        example: true
+  Course_stats:
+    type: object
+    properties:
+      num_parqr_users:
+        type: integer
+        example: 0
+      num_posts:
+        type: string
+        example: "667"
+      num_students:
+        type: string
+        example: N/A
+  ResolvePostBody:
+    type: object
+    required:
+    - post_id
+    - resolved
+    properties:
+      post_id:
+        type: string
+        example: "187"
+      resolved:
+        type: boolean
+        example: false
+        description: "resolved:\n  * false - mark a post as unresolved \n  * true - mark a post as resolved\n"
+      user_id:
+        type: string
+  AssignPostBody:
+    type: object
+    required:
+    - assign
+    - assignee
+    - post_id
+    properties:
+      post_id:
+        type: integer
+        example: 19
+      assign:
+        type: boolean
+        example: false
+        description: |
+          resolved:
+            * false - assign the assignee
+            * true - unassign the assignee
+      assignee:
+        type: string
+        example: Peter Parqr
+        description: the instructor's name
+      user_id:
+        type: string
