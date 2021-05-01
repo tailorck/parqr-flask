@@ -1,0 +1,1198 @@
+{
+	"info": {
+		"_postman_id": "b49c9aad-124a-47e2-8871-36e0680d4e76",
+		"name": "PARQR AWS Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Production",
+			"item": [
+				{
+					"name": "Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"Hello, World!\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_path}}/prod",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Enrolled Courses",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Enrolled course >= 1\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(1);",
+									"});",
+									"",
+									"pm.test(\"CS 007 Enrolled\", function() {",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    var not_enrolled = true",
+									"    for(let i=0; i < jsonData.length; i++) {",
+									"        if(jsonData[i][\"course_num\"] == \"CS 007\") {",
+									"            not_enrolled = false",
+									"        }",
+									"    }",
+									"    ",
+									"    if(not_enrolled) {",
+									"        pm.expect.fail()",
+									"    }",
+									"})",
+									"",
+									"pm.test(\"CS 007 Active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    for(let i=0; i < jsonData.length; i++) {",
+									"        if(jsonData[i][\"course_num\"] == \"CS 007\") {",
+									"            pm.expect(jsonData[i].active).to.be.true",
+									"        }",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Course by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Is Course Found\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"name\")",
+									"    pm.expect(jsonData).to.have.property(\"active\")",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Course Active",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"CS 007 Active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"active\")",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activate Course",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.active).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Course",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.active).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Similar Posts (With N)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"minimax\",\n  \"N\": 3,\n  \"course_id\": \"j8rf9vx65vl23t\"\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/query/student",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"query",
+								"student"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"type\": \"event\",\n   \"eventName\": \"newPost\",\n   \"eventData\": {\n       \"course_id\": \"j8rf9vx65vl23t\"\n   },\n   \"time\": 1517455808181,\n   \"user_id\": \"8376055785967259\"\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/prod/event",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"event"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Feedback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"feedback_pid\": 82,\n  \"query_rec_id\": \"d357628d-e49f-475d-b9f3-cd45162c6ddd\",\n  \"user_id\": \"some_user_id\",\n  \"course_id\": \"jze974ouf142qb\",\n  \"user_rating\": 4\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/prod/feedback",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"feedback"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Student Recommendation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/recommendation/student",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"recommendation",
+								"student"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Instructor Recommendation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/prod/courses/j8rf9vx65vl23t/recommendation/instructor",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"prod",
+								"courses",
+								"j8rf9vx65vl23t",
+								"recommendation",
+								"instructor"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dev",
+			"item": [
+				{
+					"name": "Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"Hello, World!\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_path}}/dev",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Enrolled Courses",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Enrolled course >= 1\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(1);",
+									"});",
+									"",
+									"pm.test(\"CS 007 Enrolled\", function() {",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    var not_enrolled = true",
+									"    for(let i=0; i < jsonData.length; i++) {",
+									"        if(jsonData[i][\"course_num\"] == \"CS 007\") {",
+									"            not_enrolled = false",
+									"        }",
+									"    }",
+									"    ",
+									"    if(not_enrolled) {",
+									"        pm.expect.fail()",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get Enrolled Courses",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_path}}/dev/courses",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "[\n    {\n        \"active\": true,\n        \"course_id\": \"kjtwqci7hit5i6\",\n        \"course_num\": \"CS- 6601 P\",\n        \"name\": \"Artificial Intelligence P\",\n        \"stats\": {\n            \"num_parqr_users\": 0,\n            \"num_posts\": \"1028\",\n            \"num_students\": \"301\"\n        },\n        \"term\": \"Spring 2021\"\n    },\n    {\n        \"active\": true,\n        \"course_id\": \"j8rf9vx65vl23t\",\n        \"course_num\": \"CS 007\",\n        \"name\": \"Parqr Test Course\",\n        \"stats\": {\n            \"num_parqr_users\": 1,\n            \"num_posts\": \"21\",\n            \"num_students\": \"8\"\n        },\n        \"term\": \"Fall 2017\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Find Course by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Is Course Found\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"name\")",
+									"    pm.expect(jsonData).to.have.property(\"active\")",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Course Active",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"CS 007 Active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"active\")",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"active"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Check Course Active",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/active",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"active"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"name\": \"Artificial Intelligence P\",\n    \"course_id\": \"kjtwqci7hit5i6\",\n    \"term\": \"Spring 2021\",\n    \"course_num\": \"CS- 6601 P\",\n    \"stats\": {\n        \"num_posts\": \"1028\",\n        \"num_students\": \"301\",\n        \"num_parqr_users\": 0\n    },\n    \"active\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "Activate Course",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.active).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Course",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.active).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/active",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Similar Posts (With N) (Student Suggestion)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"final\",\n  \"N\": 3,\n  \"course_id\": \"{{course_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/query/student",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"query",
+								"student"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Similar Posts (With N) (Student Suggestion)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"query\": \"final\",\n  \"N\": 3,\n  \"course_id\": \"kjtwqci7hit5i6\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/query/student",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"query",
+										"student"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "[\n    {\n        \"pid\": 946,\n        \"score\": 0.10768946016701471,\n        \"subject\": \"Question about A4 grade discrepancy\",\n        \"s_answer\": false,\n        \"i_answer\": true,\n        \"feedback\": false,\n        \"modified_date\": \"1617816718\",\n        \"num_followups\": 1,\n        \"resolved\": false,\n        \"pretty_date\": \"1w ago\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Instructor Suggestion",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": \"final\",\n    \"course_id\": \"{{course_id}}\",\n    \"status\": \"instructor\"\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/query/student",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"query",
+								"student"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Instructor Suggestion",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"final\",\n    \"course_id\": \"kjtwqci7hit5i6\",\n    \"status\": \"instructor\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/query/student",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"query",
+										"student"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "[\n    {\n        \"score\": 0.36684594115433433,\n        \"subject\": \".\",\n        \"detail\": null,\n        \"post_type\": \"question\",\n        \"semester\": \"Fall 2017\",\n        \"s_answer\": false,\n        \"i_answer\": true,\n        \"modified_date\": 1512863362,\n        \"pretty_date\": \"3y ago\",\n        \"answers\": {\n            \"s_answer\": null,\n            \"i_answer\": \"Marking as resolved\"\n        }\n    },\n    {\n        \"score\": 0.328841838570531,\n        \"subject\": \"should we wait for CS&#43;6601&#43;Final&#43;Fall&#43;2018&#43;v1.1?\",\n        \"detail\": \"I just saw final release and can not find it now? Would it be updated to version 1.1?\\nCan I begin to work on it now?\",\n        \"post_type\": \"question\",\n        \"semester\": \"Fall 2018\",\n        \"s_answer\": true,\n        \"i_answer\": true,\n        \"modified_date\": 1543819845,\n        \"pretty_date\": \"2y ago\",\n        \"answers\": {\n            \"s_answer\": \"I also saw the Canvas app notification for final being released at around 12/02/2018 7:52 PM EST,  but I did not see the PDF file for final in Canvas, actually. It might have retracted. This might have been either a test or mistake. I think that final PDF would be released at 12/03/2018 midnight AoE time (12/03/2018 7:00 AM EST).\",\n            \"i_answer\": \"We are still reviewing and editing the final, the final version is going to be released by midnight AoE.\"\n        }\n    },\n    {\n        \"score\": 0.31864548142258914,\n        \"subject\": \"How much time did the final take you?\",\n        \"detail\": \"How much time did the final take you?\\n\",\n        \"post_type\": \"poll\",\n        \"semester\": \"Spring 2019\",\n        \"s_answer\": false,\n        \"i_answer\": false,\n        \"modified_date\": 1556561604,\n        \"pretty_date\": \"2y ago\",\n        \"answers\": {\n            \"s_answer\": null,\n            \"i_answer\": null\n        }\n    },\n    {\n        \"score\": 0.29732225768102044,\n        \"subject\": \"How do you feel after the Final?\",\n        \"detail\": \"\\n\",\n        \"post_type\": \"poll\",\n        \"semester\": \"Fall 2018\",\n        \"s_answer\": false,\n        \"i_answer\": false,\n        \"modified_date\": 1544321137,\n        \"pretty_date\": \"2y ago\",\n        \"answers\": {\n            \"s_answer\": null,\n            \"i_answer\": null\n        }\n    },\n    {\n        \"score\": 0.2964127730944396,\n        \"subject\": \"Final Q10B.2\",\n        \"detail\": \"When comparing the SA solution with the GA in question A.5, do I compare the best of the two states in A.5 with the final step in B.1? Thanks!\",\n        \"post_type\": \"question\",\n        \"semester\": \"Fall 2018\",\n        \"s_answer\": false,\n        \"i_answer\": true,\n        \"modified_date\": 1544312416,\n        \"pretty_date\": \"2y ago\",\n        \"answers\": {\n            \"s_answer\": null,\n            \"i_answer\": \"Yes, best of the two states in A.5 with the final step in B.1\"\n        }\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_type\": \"click\",\n    \"course_id\": \"{{course_id}}\", \n    \"event_data\": {\n        \"time\": 1517455808181,\n        \"postId\": 28,\n        \"postSemester\": \"Spring 2020\",\n        \"postTitle\": \"How do I do alpha beta pruning\",\n        \"answerer\": \"i_answer\",\n        \"recommendedPostId\": null,\n        \"isCurrentSemester\": false\n    },\n   \"user_id\": \"8376055785967259\"\n}\n\n"
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/event",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"event"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Feedback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"feedback_pid\": 82,\n  \"query_rec_id\": \"d357628d-e49f-475d-b9f3-cd45162c6ddd\",\n  \"user_id\": \"some_user_id\",\n  \"course_id\": \"jze974ouf142qb\",\n  \"user_rating\": 4\n}"
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/feedback",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"feedback"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Student Recommendation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/recommendation/student",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"recommendation",
+								"student"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Student Recommendation",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/recommendation/student",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"recommendation",
+										"student"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"message\": \"success\",\n    \"recommendations\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Instructor Recommendation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Your test name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "thisisthetakeyfortas",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/recommendation/instructor",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"recommendation",
+								"instructor"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Instructor Recommendation",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "thisisthetakeyfortas",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/recommendation/instructor",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"recommendation",
+										"instructor"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Resolve",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"post_id\": \"989\",\n  \"resolved\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/resolve",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"resolve"
+							]
+						},
+						"description": "Resolve a post on TA dashboard"
+					},
+					"response": [
+						{
+							"name": "Resolve",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"post_id\": \"989\",\n  \"resolved\": false\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_path}}/dev/courses/kjtwqci7hit5i6/resolve",
+									"host": [
+										"{{base_path}}"
+									],
+									"path": [
+										"dev",
+										"courses",
+										"kjtwqci7hit5i6",
+										"resolve"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"message\": \"success\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Assign",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"post_id\": 19, \n    \"assign\": false, \n    \"assignee\": \"Lakshmi Nair\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_path}}/dev/courses/{{course_id}}/assign",
+							"host": [
+								"{{base_path}}"
+							],
+							"path": [
+								"dev",
+								"courses",
+								"{{course_id}}",
+								"assign"
+							]
+						},
+						"description": "Assign a post to TA in instructor dashboard"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_path",
+			"value": "aws.parqr.io"
+		},
+		{
+			"key": "course_id",
+			"value": "kjtwqci7hit5i6"
+		}
+	]
+}
